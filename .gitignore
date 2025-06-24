@@ -1,0 +1,46 @@
+# Environment Configuration
+.env
+src/config/database.php
+
+# Development Environment Files
+/logs/
+/tmp/
+/cache/
+*.log
+
+# Server Specific
+.htaccess
+.user.ini
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# PHP Specific
+composer.phar
+vendor/
+*.cache
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+phpunit.xml
+.phpunit.result.cache
+coverage/
