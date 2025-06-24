@@ -1,0 +1,89 @@
+-- CS3332 AllStars Team Task & Project Management System
+-- Database Schema for MySQL/XAMPP
+-- Based on Class Diagram v1.0
+
+DROP DATABASE IF EXISTS ttpm_system;
+CREATE DATABASE ttpm_system;
+USE ttpm_system;
+
+-- Users table (User class)
+-- Attributes: +userID: int, -username: string, -email: string, -passwordHash: string, -name: string
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Projects table (Project class)  
+-- Attributes: +projectID: int, -title: string, -createdDate: Date, -description: string
+CREATE TABLE projects (
+    project_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tasks table (Task class)
+-- Attributes: +taskID: int, +assignedBy: int, +assignedDate: Date, -title: string, -description: string, -status: enumeration, -dueDate: Date
+CREATE TABLE tasks (
+    task_id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    status ENUM('To Do', 'In Progress', 'Done') DEFAULT 'To Do',
+    assigned_by INT,
+    assigned_date TIMESTAMP NULL,
+    due_date DATE NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+-- Comments table (Comment class)
+-- Attributes: +commentID: int, -content: string, -timestamp: DateTime
+CREATE TABLE comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Project Memberships table (ProjectMembership association class)
+-- Attributes: +userID: int, +projectID: int, -role: string
+CREATE TABLE project_memberships (
+    membership_id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('member', 'admin') DEFAULT 'member',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_membership (project_id, user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Task Assignments table (many-to-many relationship between Users and Tasks)
+-- Supports FR-15: task assignment to one or more team members
+CREATE TABLE task_assignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id INT NOT NULL,
+    user_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_assignment (task_id, user_id),
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Add indexes for performance
+CREATE INDEX idx_projects_created_date ON projects(created_date);
+CREATE INDEX idx_tasks_status ON tasks(status);
+CREATE INDEX idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX idx_comments_timestamp ON comments(timestamp);
+CREATE INDEX idx_memberships_role ON project_memberships(role);
