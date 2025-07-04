@@ -3,7 +3,7 @@
 -- Based on Class Diagram v1.0
 
 DROP DATABASE IF EXISTS ttpm_system;
-CREATE DATABASE ttpm_system;
+CREATE DATABASE ttpm_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ttpm_system;
 
 -- Users table (User class)
@@ -81,9 +81,31 @@ CREATE TABLE task_assignments (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- Notifications table - User alerts based on project events
+-- Supports real-time notifications for task updates, assignments, and comments
+CREATE TABLE notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('task_assigned', 'task_updated', 'task_completed', 'comment_added', 'project_invitation', 'deadline_reminder') NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    related_task_id INT NULL,
+    related_project_id INT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (related_task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
+    FOREIGN KEY (related_project_id) REFERENCES projects(project_id) ON DELETE CASCADE
+);
+
 -- Add indexes for performance
 CREATE INDEX idx_projects_created_date ON projects(created_date);
 CREATE INDEX idx_tasks_status ON tasks(status);
 CREATE INDEX idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX idx_comments_timestamp ON comments(timestamp);
 CREATE INDEX idx_memberships_role ON project_memberships(role);
+CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX idx_notifications_type ON notifications(type);

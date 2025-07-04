@@ -6,6 +6,7 @@ USE ttpm_system;
 
 -- Clear existing data (for clean resets during testing)
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE notifications;
 TRUNCATE TABLE task_assignments;
 TRUNCATE TABLE comments;
 TRUNCATE TABLE tasks;
@@ -128,6 +129,34 @@ INSERT INTO comments (comment_id, task_id, user_id, content, timestamp) VALUES
 (12, 14, 2, 'Frontend framework selection complete. Using modern CSS Grid and Flexbox for responsive layout.', '2025-06-22 11:00:00'),
 (13, 14, 5, 'Working on the component library. Making sure all UI elements are reusable and consistent.', '2025-06-22 16:30:00');
 
+-- Sample Notifications - tests notification system functionality
+INSERT INTO notifications (notification_id, user_id, type, title, message, related_task_id, related_project_id, is_read, created_at, read_at) VALUES
+-- Task assignment notifications
+(1, 2, 'task_assigned', 'New Task Assignment', 'You have been assigned to task: Create Use Case Diagrams', 1, 1, TRUE, '2025-06-01 10:00:00', '2025-06-01 10:15:00'),
+(2, 4, 'task_assigned', 'New Task Assignment', 'You have been assigned to task: Design Class Diagrams', 2, 1, TRUE, '2025-06-01 10:15:00', '2025-06-01 11:00:00'),
+(3, 1, 'task_assigned', 'New Task Assignment', 'You have been assigned to task: Implement Database Schema', 3, 1, FALSE, '2025-06-15 09:00:00', NULL),
+
+-- Task update notifications
+(4, 1, 'task_updated', 'Task Status Changed', 'Task "Create Use Case Diagrams" has been marked as completed', 1, 1, TRUE, '2025-06-07 15:30:00', '2025-06-07 16:00:00'),
+(5, 1, 'task_updated', 'Task Status Changed', 'Task "Design Class Diagrams" has been marked as completed', 2, 1, TRUE, '2025-06-09 14:15:00', '2025-06-09 15:00:00'),
+
+-- Comment notifications
+(6, 1, 'comment_added', 'New Comment', 'Summer Hill commented on task: Create Use Case Diagrams', 1, 1, TRUE, '2025-06-07 15:30:00', '2025-06-07 16:45:00'),
+(7, 2, 'comment_added', 'New Comment', 'James Ward replied to your comment on task: Create Use Case Diagrams', 1, 1, TRUE, '2025-06-07 16:45:00', '2025-06-07 17:00:00'),
+(8, 4, 'comment_added', 'New Comment', 'James Ward commented on task: Design Class Diagrams', 2, 1, FALSE, '2025-06-09 14:15:00', NULL),
+
+-- Project invitation notifications
+(9, 5, 'project_invitation', 'Project Invitation', 'You have been invited to join project: Website Redesign Project', NULL, 2, TRUE, '2025-06-10 15:00:00', '2025-06-10 15:30:00'),
+(10, 7, 'project_invitation', 'Project Invitation', 'You have been invited to join project: Learning Management System', NULL, 5, TRUE, '2025-06-20 11:20:00', '2025-06-20 11:45:00'),
+
+-- Deadline reminder notifications
+(11, 1, 'deadline_reminder', 'Upcoming Deadline', 'Task "Implement Database Schema" is due in 2 days', 3, 1, FALSE, '2025-06-23 09:00:00', NULL),
+(12, 2, 'deadline_reminder', 'Upcoming Deadline', 'Task "Develop User Authentication" is due in 3 days', 4, 1, FALSE, '2025-06-27 09:00:00', NULL),
+
+-- Task completion notifications
+(13, 1, 'task_completed', 'Task Completed', 'Task "Fix Login Bug" has been completed by Juan Ledet', 10, 3, TRUE, '2025-06-16 09:15:00', '2025-06-16 10:00:00'),
+(14, 6, 'task_completed', 'Task Completed', 'Task "Conduct User Research" has been completed by Test Member', 7, 2, FALSE, '2025-06-17 14:30:00', NULL);
+
 -- Reset AUTO_INCREMENT values to maintain consistency
 ALTER TABLE users AUTO_INCREMENT = 8;
 ALTER TABLE projects AUTO_INCREMENT = 6;
@@ -135,6 +164,7 @@ ALTER TABLE tasks AUTO_INCREMENT = 18;
 ALTER TABLE comments AUTO_INCREMENT = 14;
 ALTER TABLE project_memberships AUTO_INCREMENT = 13;
 ALTER TABLE task_assignments AUTO_INCREMENT = 16;
+ALTER TABLE notifications AUTO_INCREMENT = 15;
 
 -- Verification queries (commented out - uncomment for testing)
 -- SELECT 'User Accounts Created:' as info, COUNT(*) as count FROM users;
