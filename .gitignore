@@ -39,30 +39,3 @@ vendor/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Setup Script Testing (Infrastructure Testing Only)
-test/test_runner.bat
-test/test_fresh_member.bat
-test/test_components.bat
-test/test_schema_syntax.bat
-test/test_config_files.bat
-test/test_mysql_connection.bat
-test/test_setup_syntax.bat
-test/test_clean_setup.bat
-test/test_database.bat
-test/test_errors.bat
-test/test_symlink.bat
-test/setup_tests.md
-test/debug_*.bat
-*_debug.bat
-*_diagnostic.bat
-setup_debug.bat
-setup_quick_fix.bat
-mysql_diagnostic.bat
-test_mysql_*.bat
-
-# Testing Artifacts
-*.test_backup
-error*.log
-test_output.log
-detailed_error.log

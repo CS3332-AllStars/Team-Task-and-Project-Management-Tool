@@ -278,13 +278,5 @@ session_start();
             </div>
         </div>
     </div>
-
-    <!-- Development Access (Remove in production) -->
-    <?php if (isset($_GET['dev'])): ?>
-    <div style="position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 4px; font-size: 0.8rem;">
-        <a href="dev-status.php?dev=status" style="color: #4CAF50;">Dev Status</a> | 
-        <a href="index_backup.php" style="color: #ffa500;">Original</a>
-    </div>
-    <?php endif; ?>
 </body>
 </html>

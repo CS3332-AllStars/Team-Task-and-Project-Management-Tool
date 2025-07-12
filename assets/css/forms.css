@@ -1,0 +1,218 @@
+/* CS3332 AllStars Team Task & Project Management System */
+/* Form Components & Validation Styles */
+
+/* ===== FORM VALIDATION STATES ===== */
+.field-error {
+    color: #e74c3c;
+    font-size: 0.875rem;
+    margin-top: 6px;
+    display: block;
+}
+
+.form-group.has-error input {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.form-group.has-success input {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+/* ===== PASSWORD STRENGTH INDICATOR ===== */
+.password-strength {
+    margin-top: 8px;
+}
+
+.strength-bar {
+    width: 100%;
+    height: 6px;
+    background: #e1e8ed;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.strength-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+}
+
+.strength-fill.strength-0 { width: 10%; background: #e74c3c; }
+.strength-fill.strength-1 { width: 25%; background: #e67e22; }
+.strength-fill.strength-2 { width: 50%; background: #f39c12; }
+.strength-fill.strength-3 { width: 75%; background: #f1c40f; }
+.strength-fill.strength-4 { width: 90%; background: #2ecc71; }
+.strength-fill.strength-5 { width: 100%; background: #27ae60; }
+
+.strength-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.strength-requirements {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    line-height: 1.4;
+}
+
+/* ===== AJAX VALIDATION INDICATORS ===== */
+.validation-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+}
+
+.validation-indicator.checking {
+    border: 2px solid #3498db;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.validation-indicator.valid {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.validation-indicator.invalid {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.validation-indicator.valid::after {
+    content: "✓";
+}
+
+.validation-indicator.invalid::after {
+    content: "✗";
+}
+
+/* ===== FORM INPUT WRAPPERS ===== */
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper input {
+    padding-right: 40px;
+}
+
+/* ===== ENHANCED ALERTS ===== */
+.alert {
+    position: relative;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert::before {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.alert-error::before {
+    content: "⚠️";
+}
+
+.alert-success::before {
+    content: "✅";
+}
+
+.alert-info::before {
+    content: "ℹ️";
+}
+
+.alert-warning::before {
+    content: "⚡";
+}
+
+/* ===== FORM ANIMATIONS ===== */
+.form-group {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+input:focus-visible {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+.btn:focus-visible {
+    outline: 2px solid #2c3e50;
+    outline-offset: 2px;
+}
+
+/* ===== RESPONSIVE FORM ADJUSTMENTS ===== */
+@media (max-width: 480px) {
+    .strength-bar {
+        height: 8px;
+    }
+    
+    .validation-indicator {
+        width: 18px;
+        height: 18px;
+        right: 10px;
+    }
+    
+    .alert {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ===== DARK MODE SUPPORT (Optional) ===== */
+@media (prefers-color-scheme: dark) {
+    .container {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+        background: #34495e;
+        border-color: #4a5f7a;
+        color: #ecf0f1;
+    }
+    
+    input:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+    
+    .strength-bar {
+        background: #4a5f7a;
+    }
+    
+    .alert-error {
+        background: rgba(231, 76, 60, 0.2);
+        border-color: #e74c3c;
+        color: #ec7063;
+    }
+    
+    .alert-success {
+        background: rgba(39, 174, 96, 0.2);
+        border-color: #27ae60;
+        color: #58d68d;
+    }
+}
