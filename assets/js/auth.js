@@ -141,34 +141,39 @@ class AuthManager {
 
     // ===== REAL-TIME VALIDATION =====
     initRealTimeValidation() {
-        // Username availability checking
-        const usernameField = document.querySelector('input[name="username"]');
-        if (usernameField) {
-            usernameField.addEventListener('blur', () => {
-                this.checkUsernameAvailability(usernameField.value);
-            });
-        }
+        // Only check availability on registration page
+        const isRegistrationPage = document.querySelector('#registrationForm') !== null;
+        
+        if (isRegistrationPage) {
+            // Username availability checking
+            const usernameField = document.querySelector('input[name="username"]');
+            if (usernameField) {
+                usernameField.addEventListener('blur', () => {
+                    this.checkUsernameAvailability(usernameField.value);
+                });
+            }
 
-        // Email availability checking
-        const emailField = document.querySelector('input[name="email"]');
-        if (emailField) {
-            emailField.addEventListener('blur', () => {
-                this.checkEmailAvailability(emailField.value);
-            });
-        }
+            // Email availability checking
+            const emailField = document.querySelector('input[name="email"]');
+            if (emailField) {
+                emailField.addEventListener('blur', () => {
+                    this.checkEmailAvailability(emailField.value);
+                });
+            }
 
-        // Password strength checking with debouncing
-        const passwordField = document.querySelector('input[name="password"]');
-        if (passwordField) {
-            passwordField.addEventListener('input', () => {
-                // Clear previous timeout
-                clearTimeout(this.passwordTimeout);
-                
-                // Set new timeout for debouncing
-                this.passwordTimeout = setTimeout(() => {
-                    this.updatePasswordStrength(passwordField.value);
-                }, 500); // 500ms delay after user stops typing
-            });
+            // Password strength checking with debouncing
+            const passwordField = document.querySelector('input[name="password"]');
+            if (passwordField) {
+                passwordField.addEventListener('input', () => {
+                    // Clear previous timeout
+                    clearTimeout(this.passwordTimeout);
+                    
+                    // Set new timeout for debouncing
+                    this.passwordTimeout = setTimeout(() => {
+                        this.updatePasswordStrength(passwordField.value);
+                    }, 500); // 500ms delay after user stops typing
+                });
+            }
         }
     }
 
