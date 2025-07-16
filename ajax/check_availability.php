@@ -3,10 +3,18 @@
 // AJAX Endpoint - CS3-11A: Username/Email Availability Check
 // Real-time validation for registration form
 
-header('Content-Type: application/json');
+// Only set headers if not in test environment
+if (!defined('PHPUNIT_COMPOSER_INSTALL') && !headers_sent()) {
+    header('Content-Type: application/json');
+}
 
 require_once __DIR__ . '/../src/config/database.php';
 require_once __DIR__ . '/../src/models/User.php';
+
+// Handle test environment where global $pdo might exist
+if (!isset($pdo)) {
+    global $pdo;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
