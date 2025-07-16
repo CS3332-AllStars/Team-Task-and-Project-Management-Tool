@@ -15,15 +15,34 @@ class User {
      * CS3-11A requirement: Hash with password_hash($pwd, PASSWORD_DEFAULT)
      */
     public function register($username, $email, $password, $name) {
+        // Sanitize inputs (allow some content, just remove dangerous HTML)
+        $username = htmlspecialchars(trim($username), ENT_QUOTES, 'UTF-8');
+        $email = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
+        $name = htmlspecialchars(trim($name), ENT_QUOTES, 'UTF-8');
+        
+        // Validate input lengths to prevent database errors
+        if (strlen($username) > 50) {
+            return ['success' => false, 'message' => 'Username too long (max 50 characters)'];
+        }
+        if (strlen($email) > 100) {
+            return ['success' => false, 'message' => 'Email too long (max 100 characters)'];
+        }
+        if (strlen($name) > 100) {
+            return ['success' => false, 'message' => 'Name too long (max 100 characters)'];
+        }
+        if (empty($username) || empty($email) || empty($name)) {
+            return ['success' => false, 'message' => 'All fields are required'];
+        }
+        
+        // Validate password strength FIRST (before any DB queries)
+        $passwordValidation = $this->validatePasswordStrength($password);
+        if (!$passwordValidation['valid']) {
+            return ['success' => false, 'message' => 'Password must have: ' . $passwordValidation['message']];
+        }
+        
         // Check for duplicate username or email
         if ($this->isDuplicate($username, $email)) {
             return ['success' => false, 'message' => 'Username or email already exists'];
-        }
-        
-        // Validate password strength
-        $passwordValidation = $this->validatePasswordStrength($password);
-        if (!$passwordValidation['valid']) {
-            return ['success' => false, 'message' => $passwordValidation['message']];
         }
         
         // Hash password securely
@@ -67,32 +86,43 @@ class User {
         
         // Minimum length check
         if (strlen($password) < 8) {
-            $errors[] = "At least 8 characters long";
+            $errors[] = "Password must be at least 8 characters long";
         }
         
         // Require at least one number
         if (!preg_match('/\d/', $password)) {
-            $errors[] = "At least one number";
+            $errors[] = "Password must have at least one number";
         }
         
         // Require at least one uppercase letter
         if (!preg_match('/[A-Z]/', $password)) {
-            $errors[] = "At least one uppercase letter";
+            $errors[] = "Password must have at least one uppercase letter";
         }
         
         // Require at least one lowercase letter
         if (!preg_match('/[a-z]/', $password)) {
-            $errors[] = "At least one lowercase letter";
+            $errors[] = "Password must have at least one lowercase letter";
         }
         
         // Require at least one symbol
         if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-            $errors[] = "At least one symbol (!@#$%^&*)";
+            $errors[] = "Password must have at least one symbol (!@#$%^&*)";
         }
         
+        if (empty($errors)) {
+            return [
+                'valid' => true,
+                'message' => '',
+                'errors' => []
+            ];
+        }
+        
+        // Format message for single vs multiple errors
+        $message = count($errors) === 1 ? $errors[0] : implode('. ', $errors);
+        
         return [
-            'valid' => empty($errors),
-            'message' => implode('. ', $errors),
+            'valid' => false,
+            'message' => $message,
             'errors' => $errors
         ];
     }
