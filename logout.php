@@ -1,9 +1,11 @@
 <?php
 // CS3332 AllStars Team Task & Project Management System
-// Logout Script - CS3-11A: Session Management
+// Logout Script - CS3-11B: Secure Session Destruction
 
-session_start();
-session_destroy();
-header('Location: login.php');
+require_once 'includes/session-manager.php';
+
+startSecureSession();
+destroySession();
+header('Location: login.php?logout=1');
 exit;
 ?>

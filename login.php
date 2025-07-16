@@ -3,9 +3,12 @@
 // User Login Page - CS3-11A: Clean, Professional Implementation
 // Properly organized with external CSS/JS
 
-session_start();
+require_once 'includes/session-manager.php';
+require_once 'includes/csrf-protection.php';
 require_once 'src/config/database.php';
 require_once 'src/models/User.php';
+
+startSecureSession();
 
 $user = new User($pdo);
 $error = '';
@@ -13,6 +16,8 @@ $success = '';
 
 // Process login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCSRFToken();
+    
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     
@@ -25,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $result['user']['user_id'];
             $_SESSION['username'] = $result['user']['username'];
             $_SESSION['name'] = $result['user']['name'];
-            $success = "Login successful! Welcome, " . htmlspecialchars($result['user']['name']);
+            header('Location: dashboard.php');
+            exit;
         } else {
             $error = $result['message'];
         }
@@ -50,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <h1>Sign In</h1>
         
-        <?php if (isset($_SESSION['user_id'])): ?>
+        <?php if (isLoggedIn()): ?>
             <!-- Logged In User Info -->
             <div class="user-info">
                 <h3>Welcome back!</h3>
@@ -58,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p><strong>Username:</strong> <?php echo htmlspecialchars($_SESSION['username']); ?></p>
                 <p><strong>Name:</strong> <?php echo htmlspecialchars($_SESSION['name']); ?></p>
                 <a href="logout.php" class="btn btn-secondary">Logout</a>
+                <a href="dashboard.php" class="btn btn-primary">Go to Dashboard</a>
             </div>
         <?php else: ?>
             <!-- Login Form -->
@@ -70,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" id="loginForm" novalidate autocomplete="on">
+                <?php echo csrfTokenInput(); ?>
                 <div class="form-group">
                     <label for="username">Username or Email</label>
                     <div class="input-wrapper">

@@ -1,165 +1,179 @@
 <?php
 // CS3332 AllStars Team Task & Project Management System
-// Main Dashboard - Core Application Interface
-// Requires user authentication
+// Simple Dashboard for Authentication Testing
 
-session_start();
+require_once 'includes/session-check.php';
 
-// Redirect to login if not authenticated
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+// Simple mysqli connection
+$host = 'localhost';
+$dbname = 'ttpm_system';
+$username = 'root';
+$password = '';
+
+$mysqli = new mysqli($host, $username, $password, $dbname);
+
+if ($mysqli->connect_error) {
+    die("Connection failed: " . $mysqli->connect_error);
 }
 
-require_once 'src/config/database.php';
-require_once 'src/models/User.php';
-require_once 'src/models/Project.php';
-require_once 'src/models/Task.php';
-
-$user = new User($pdo);
-$projectModel = new Project($pdo);
-$taskModel = new Task($pdo);
-
-// Get user data
-$userData = $user->getUserById($_SESSION['user_id']);
-
-// Get user's projects and tasks for dashboard overview
-try {
-    // Get projects user is member of
-    $userProjects = $projectModel->getUserProjects($_SESSION['user_id']);
-    
-    // Get recent tasks assigned to user
-    $userTasks = $taskModel->getUserTasks($_SESSION['user_id'], 5); // Limit to 5 recent
-    
-    // Get activity notifications (if notifications table exists)
-    $notifications = [];
-    
-} catch (Exception $e) {
-    $error = "Dashboard data loading failed: " . $e->getMessage();
+// Get user projects
+$userProjects = [];
+if (isset($_SESSION['user_id'])) {
+    $stmt = $mysqli->prepare("
+        SELECT p.project_id, p.title, p.description, pm.role 
+        FROM projects p 
+        JOIN project_memberships pm ON p.project_id = pm.project_id 
+        WHERE pm.user_id = ?
+    ");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $userProjects[] = $row;
+    }
+    $stmt->close();
 }
+
+// Get user tasks
+$userTasks = [];
+if (isset($_SESSION['user_id'])) {
+    $stmt = $mysqli->prepare("
+        SELECT t.task_id, t.title, t.status, p.title as project_title
+        FROM tasks t 
+        JOIN task_assignments ta ON t.task_id = ta.task_id 
+        JOIN projects p ON t.project_id = p.project_id
+        WHERE ta.user_id = ?
+        LIMIT 10
+    ");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $userTasks[] = $row;
+    }
+    $stmt->close();
+}
+
+$mysqli->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Team Task & Project Management</title>
-    
-    <!-- External Stylesheets -->
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/forms.css">
-    
+    <title>Simple Dashboard - TTPM</title>
     <style>
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
             padding: 20px;
+            background-color: #f5f5f5;
         }
-        
-        .dashboard-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .dashboard-header h1 {
-            margin: 0 0 10px 0;
-            font-size: 2rem;
-        }
-        
-        .user-info {
-            opacity: 0.9;
-            font-size: 1.1rem;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .dashboard-card {
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
             background: white;
-            border: 1px solid #e9ecef;
+            padding: 30px;
             border-radius: 8px;
-            padding: 25px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
-        .card-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f8f9fa;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
         }
-        
-        .card-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0;
+        .section {
+            margin-bottom: 30px;
         }
-        
-        .btn-create {
-            background: #28a745;
-            color: white;
-            padding: 8px 16px;
-            border: none;
+        .section h3 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
             border-radius: 4px;
+        }
+        .logout-link {
+            float: right;
+            color: #dc3545;
             text-decoration: none;
-            font-size: 0.9rem;
-            transition: background 0.3s;
+            font-weight: bold;
         }
-        
-        .btn-create:hover {
-            background: #218838;
+        .logout-link:hover {
+            text-decoration: underline;
         }
-        
-        .item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .item-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f8f9fa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .item-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .item-title {
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        .item-meta {
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        
         .status-badge {
-            padding: 4px 8px;
+            padding: 2px 8px;
             border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background: #6c757d;
         }
-        
-        .status-todo {
-            background: #fff3cd;
-            color: #856404;
+        .auth-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
         }
-        
-        .status-progress {
-            background: #c
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="logout.php" class="logout-link">Logout</a>
+            <h1>Simple Dashboard</h1>
+            <p>Authentication Test Interface</p>
+        </div>
+
+        <div class="auth-info">
+            <h3>Authentication Status: ✅ SUCCESS</h3>
+            <p><strong>Welcome:</strong> <?php echo htmlspecialchars($_SESSION['username'] ?? 'Unknown'); ?></p>
+            <p><strong>User ID:</strong> <?php echo htmlspecialchars($_SESSION['user_id'] ?? 'Not set'); ?></p>
+            <p><strong>Session Started:</strong> <?php echo date('Y-m-d H:i:s'); ?></p>
+        </div>
+
+        <div class="section">
+            <h3>Your Projects (<?php echo count($userProjects); ?>)</h3>
+            <?php if (empty($userProjects)): ?>
+                <p>No projects found.</p>
+            <?php else: ?>
+                <?php foreach ($userProjects as $project): ?>
+                    <div class="item">
+                        <strong><?php echo htmlspecialchars($project['title']); ?></strong>
+                        <span style="float: right; color: #666;"><?php echo htmlspecialchars($project['role']); ?></span>
+                        <br>
+                        <small><?php echo htmlspecialchars($project['description'] ?? 'No description'); ?></small>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <div class="section">
+            <h3>Your Tasks (<?php echo count($userTasks); ?>)</h3>
+            <?php if (empty($userTasks)): ?>
+                <p>No tasks assigned.</p>
+            <?php else: ?>
+                <?php foreach ($userTasks as $task): ?>
+                    <div class="item">
+                        <strong><?php echo htmlspecialchars($task['title']); ?></strong>
+                        <span class="status-badge"><?php echo htmlspecialchars($task['status']); ?></span>
+                        <br>
+                        <small>Project: <?php echo htmlspecialchars($task['project_title']); ?></small>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
+            <p>Simple Dashboard - Authentication Testing Complete</p>
+        </div>
+    </div>
+</body>
+</html>
