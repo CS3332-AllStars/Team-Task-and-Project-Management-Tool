@@ -280,13 +280,31 @@ class AuthManager {
         // Create strength indicator
         const indicator = document.createElement('div');
         indicator.className = 'password-strength';
-        indicator.innerHTML = `
-            <div class="strength-bar">
-                <div class="strength-fill strength-${result.score}"></div>
-            </div>
-            <div class="strength-text">${this.getStrengthText(result.score)}</div>
-            ${!result.valid ? `<div class="strength-requirements">${result.message}</div>` : ''}
-        `;
+        
+        // Create strength bar
+        const strengthBar = document.createElement('div');
+        strengthBar.className = 'strength-bar';
+        
+        const strengthFill = document.createElement('div');
+        strengthFill.className = `strength-fill strength-${result.score}`;
+        strengthBar.appendChild(strengthFill);
+        
+        // Create strength text
+        const strengthText = document.createElement('div');
+        strengthText.className = 'strength-text';
+        strengthText.textContent = this.getStrengthText(result.score);
+        
+        // Assemble the indicator
+        indicator.appendChild(strengthBar);
+        indicator.appendChild(strengthText);
+        
+        // Add requirements text if needed
+        if (!result.valid) {
+            const requirementsDiv = document.createElement('div');
+            requirementsDiv.className = 'strength-requirements';
+            requirementsDiv.textContent = result.message;
+            indicator.appendChild(requirementsDiv);
+        }
         
         field.parentNode.appendChild(indicator);
         
@@ -310,7 +328,7 @@ class AuthManager {
             button.classList.add('loading');
         } else {
             button.disabled = false;
-            button.innerHTML = button.dataset.originalText || 'Submit';
+            button.textContent = button.dataset.originalText || 'Submit';
             button.classList.remove('loading');
         }
     }

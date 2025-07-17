@@ -16,19 +16,33 @@ if ($mysqli->connect_error) {
     die("Connection failed: " . $mysqli->connect_error);
 }
 
-// Get user projects
+// Get user projects with comprehensive metrics for CS3-12B
 $userProjects = [];
 if (isset($_SESSION['user_id'])) {
     $stmt = $mysqli->prepare("
-        SELECT p.project_id, p.title, p.description, pm.role 
+        SELECT 
+            p.project_id, 
+            p.title, 
+            p.description, 
+            pm.role,
+            (SELECT COUNT(*) FROM project_memberships pm2 WHERE pm2.project_id = p.project_id) as team_size,
+            (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.project_id) as total_tasks,
+            (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.project_id AND t.status = 'Done') as completed_tasks,
+            (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.project_id AND t.status IN ('To Do', 'In Progress')) as active_tasks,
+            p.created_date
         FROM projects p 
         JOIN project_memberships pm ON p.project_id = pm.project_id 
         WHERE pm.user_id = ?
+        ORDER BY pm.joined_at DESC
     ");
     $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) {
+        // Calculate progress percentage
+        $row['progress_percent'] = $row['total_tasks'] > 0 
+            ? round(($row['completed_tasks'] / $row['total_tasks']) * 100) 
+            : 0;
         $userProjects[] = $row;
     }
     $stmt->close();
@@ -62,71 +76,11 @@ $mysqli->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Dashboard - TTPM</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section h3 {
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-        }
-        .item {
-            padding: 10px;
-            margin: 5px 0;
-            background: #f9f9f9;
-            border-left: 4px solid #007bff;
-            border-radius: 4px;
-        }
-        .logout-link {
-            float: right;
-            color: #dc3545;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .logout-link:hover {
-            text-decoration: underline;
-        }
-        .status-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            background: #6c757d;
-        }
-        .auth-info {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/project.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class="container dashboard">
+        <div class="header center">
             <a href="logout.php" class="logout-link">Logout</a>
             <h1>Simple Dashboard</h1>
             <p>Authentication Test Interface</p>
@@ -140,18 +94,63 @@ $mysqli->close();
         </div>
 
         <div class="section">
-            <h3>Your Projects (<?php echo count($userProjects); ?>)</h3>
+            <div class="flex-between mb-2">
+                <h3 style="margin: 0;">Your Projects (<?php echo count($userProjects); ?>)</h3>
+                <a href="create-project.php" class="btn-create">+ Create New Project</a>
+            </div>
+            
             <?php if (empty($userProjects)): ?>
-                <p>No projects found.</p>
+                <div class="text-center tasks-placeholder">
+                    <p><strong>No projects yet!</strong></p>
+                    <p>Create your first project to get started with task management.</p>
+                </div>
             <?php else: ?>
-                <?php foreach ($userProjects as $project): ?>
-                    <div class="item">
-                        <strong><?php echo htmlspecialchars($project['title']); ?></strong>
-                        <span style="float: right; color: #666;"><?php echo htmlspecialchars($project['role']); ?></span>
-                        <br>
-                        <small><?php echo htmlspecialchars($project['description'] ?? 'No description'); ?></small>
-                    </div>
-                <?php endforeach; ?>
+                <div class="project-cards">
+                    <?php foreach ($userProjects as $project): ?>
+                        <div class="project-card" onclick="window.location.href='project.php?id=<?php echo $project['project_id']; ?>'">
+                            <div class="project-card-header">
+                                <div>
+                                    <a href="project.php?id=<?php echo $project['project_id']; ?>" class="project-card-title">
+                                        <?php echo htmlspecialchars($project['title']); ?>
+                                    </a>
+                                </div>
+                                <span class="role-badge role-<?php echo $project['role']; ?>">
+                                    <?php echo ucfirst($project['role']); ?>
+                                </span>
+                            </div>
+                            
+                            <div class="project-card-description">
+                                <?php echo htmlspecialchars($project['description'] ?? 'No description provided'); ?>
+                            </div>
+                            
+                            <div class="project-progress">
+                                <div class="progress-label">
+                                    <span>Progress</span>
+                                    <span><?php echo $project['progress_percent']; ?>%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill <?php echo $project['progress_percent'] == 0 ? 'zero' : ''; ?>" 
+                                         style="width: <?php echo $project['progress_percent']; ?>%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="project-stats">
+                                <div class="stat-item">
+                                    <span class="stat-number"><?php echo $project['team_size']; ?></span>
+                                    <div class="stat-label">Team Size</div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number"><?php echo $project['active_tasks']; ?></span>
+                                    <div class="stat-label">Active Tasks</div>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-number"><?php echo $project['total_tasks']; ?></span>
+                                    <div class="stat-label">Total Tasks</div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
         </div>
 
