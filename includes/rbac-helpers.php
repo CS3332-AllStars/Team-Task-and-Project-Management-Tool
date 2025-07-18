@@ -2,7 +2,7 @@
 // CS3332 AllStars Team Task & Project Management System
 // Role-Based Access Control - CS3-11C
 
-require_once 'src/config/database.php';
+require_once __DIR__ . '/../src/config/database.php';
 
 function getUserRole($userID, $projectID) {
     global $pdo;
@@ -28,6 +28,8 @@ function hasPermission($userID, $projectID, $action) {
     
     switch ($action) {
         case 'view_project':
+        case 'view_tasks':
+        case 'view_comments':
         case 'create_task':
         case 'comment':
             return $role !== null; // Any member

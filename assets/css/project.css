@@ -970,3 +970,741 @@ body {
         font-size: 14px;
     }
 }
+
+/* ===== TASK MANAGEMENT STYLES (CS3-13B, CS3-13C, CS3-13D) ===== */
+
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    margin: 0;
+}
+
+/* Task Filters */
+.task-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select, .search-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: white;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Task List */
+.task-list {
+    display: grid;
+    gap: 15px;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.empty-state h4 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Task Cards */
+.task-card {
+    background: white;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+
+.task-card.to-do {
+    border-left: 4px solid #6c757d;
+}
+
+.task-card.in-progress {
+    border-left: 4px solid #ffc107;
+}
+
+.task-card.done {
+    border-left: 4px solid #28a745;
+    opacity: 0.8;
+}
+
+/* Task Header */
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.task-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+    flex: 1;
+    margin-right: 15px;
+}
+
+.task-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+    background: #f8f9fa;
+}
+
+/* Task Content */
+.task-description {
+    color: #666;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.task-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.status-select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    background: white;
+}
+
+.task-due-date {
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.task-due-date.overdue {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Task Assignees */
+.task-assignees {
+    margin-bottom: 15px;
+}
+
+.assignees-label {
+    font-size: 12px;
+    color: #666;
+    margin-right: 8px;
+}
+
+.assignee-badge {
+    display: inline-block;
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-right: 5px;
+}
+
+.unassigned {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+}
+
+/* Task Footer */
+.task-footer {
+    border-top: 1px solid #f1f3f4;
+    padding-top: 10px;
+    margin-top: 15px;
+}
+
+.task-created {
+    color: #999;
+    font-size: 11px;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.close-modal:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 25px;
+    border-top: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+/* Form Styles in Modal */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.assignee-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.assignee-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.assignee-option:hover {
+    background: #e9ecef;
+}
+
+.assignee-option input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.assignee-option small {
+    display: block;
+    color: #666;
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.checkmark {
+    display: none;
+}
+
+/* Custom Checkbox Styling */
+.assignee-option input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #007bff;
+    border-radius: 3px;
+    background: white;
+    cursor: pointer;
+    position: relative;
+    margin-right: 10px;
+}
+
+.assignee-option input[type="checkbox"]:checked {
+    background: #007bff;
+}
+
+.assignee-option input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Responsive Task Management */
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .task-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-select, .search-input {
+        width: 100%;
+    }
+    
+    .task-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .task-actions {
+        align-self: flex-end;
+    }
+    
+    .task-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-header, .modal-body, .modal-footer {
+        padding: 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignee-selection {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .task-card {
+        padding: 15px;
+    }
+    
+    .task-title {
+        font-size: 1rem;
+    }
+    
+    .modal-content {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        max-height: none;
+    }
+    
+    .assignee-option {
+        padding: 12px 8px;
+    }
+}
+
+/* ===== COMMENT SYSTEM STYLES (CS3-14) ===== */
+
+/* Task Detail Modal */
+.modal-content.large {
+    max-width: 800px;
+    width: 95%;
+}
+
+.task-detail-info {
+    margin-bottom: 30px;
+}
+
+.task-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.task-status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.task-status-badge.status-to-do {
+    background: #6c757d;
+}
+
+.task-status-badge.status-in-progress {
+    background: #ffc107;
+    color: #333;
+}
+
+.task-status-badge.status-done {
+    background: #28a745;
+}
+
+.task-detail-description {
+    margin-bottom: 20px;
+}
+
+.task-detail-description h6 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.task-detail-description p {
+    margin: 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.task-detail-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.task-detail-assignees h6,
+.task-detail-created h6 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Comments Section */
+.comments-section {
+    border-top: 1px solid #eee;
+    padding-top: 25px;
+    margin-top: 25px;
+}
+
+.comments-section h5 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+/* Comment Form */
+.comment-form {
+    margin-bottom: 25px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.char-counter {
+    color: #666;
+    font-size: 12px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Comments List */
+.comments-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.comment {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.comment:hover {
+    border-color: #ddd;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.comment-author {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.comment-author strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.comment-time {
+    color: #666;
+    font-size: 11px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.btn-link:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.comment-content {
+    color: #333;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+/* Empty Comments State */
+.empty-comments {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-comments .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.loading-comments {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+}
+
+.error-message {
+    text-align: center;
+    padding: 20px;
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
+
+/* Task Footer Updates */
+.task-meta-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-count-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comment-count-btn:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+.task-title.clickable {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.task-title.clickable:hover {
+    color: #007bff;
+}
+
+/* Responsive Comment System */
+@media (max-width: 768px) {
+    .modal-content.large {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        max-height: none;
+    }
+    
+    .task-detail-meta {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .comment-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .comment-actions {
+        align-self: flex-end;
+    }
+    
+    .task-meta-footer {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .comment-count-btn {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 480px) {
+    .comments-section {
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+    
+    .comment {
+        padding: 12px;
+    }
+    
+    .comment-form textarea {
+        min-height: 60px;
+        font-size: 13px;
+    }
+    
+    .btn-small {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+}

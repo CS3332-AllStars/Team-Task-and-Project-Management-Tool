@@ -2,8 +2,8 @@
 // CS3332 AllStars Team Task & Project Management System
 // Protected Route Guards - CS3-11D
 
-require_once 'includes/session-manager.php';
-require_once 'includes/rbac-helpers.php';
+require_once __DIR__ . '/session-manager.php';
+require_once __DIR__ . '/rbac-helpers.php';
 
 startSecureSession();
 
