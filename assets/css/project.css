@@ -520,6 +520,372 @@ body {
     flex: 1;
 }
 
+/* ===== TOAST NOTIFICATIONS (CS3-36) ===== */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.toast.toast-show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast.toast-dismiss {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Toast Types */
+.toast-success {
+    border-left-color: #28a745;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+
+.toast-warning {
+    border-left-color: #ffc107;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+
+/* Toast Content */
+.toast-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 12px;
+}
+
+.toast-icon {
+    font-size: 18px;
+    font-weight: bold;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+}
+
+.toast-success .toast-icon {
+    color: #28a745;
+}
+
+.toast-error .toast-icon {
+    color: #dc3545;
+}
+
+.toast-warning .toast-icon {
+    color: #ffc107;
+}
+
+.toast-info .toast-icon {
+    color: #17a2b8;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #333;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 12px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.toast-close:hover {
+    background: #f8f9fa;
+    color: #333;
+}
+
+.toast-close:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Responsive Toast Design */
+@media (max-width: 480px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .toast {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .toast-message {
+        font-size: 13px;
+    }
+    
+    .toast-icon {
+        font-size: 16px;
+    }
+}
+
+/* ===== TOOLTIPS (CS3-38) ===== */
+.tooltip-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 250px;
+    word-wrap: break-word;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10001;
+}
+
+.tooltip.tooltip-show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.tooltip.tooltip-hide {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+/* Tooltip Themes */
+.tooltip-dark {
+    background: #333;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-light {
+    background: white;
+    color: #333;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-success {
+    background: #28a745;
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.tooltip-error {
+    background: #dc3545;
+    color: white;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.tooltip-warning {
+    background: #ffc107;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.tooltip-info {
+    background: #17a2b8;
+    color: white;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+/* Tooltip Content */
+.tooltip-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* Tooltip Arrows */
+.tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* Arrow positioning for different directions */
+.tooltip-top .tooltip-arrow {
+    bottom: -6px;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px 6px 0 6px;
+}
+
+.tooltip-bottom .tooltip-arrow {
+    top: -6px;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 0 6px 6px 6px;
+}
+
+.tooltip-left .tooltip-arrow {
+    right: -6px;
+    top: 50%;
+    margin-top: -6px;
+    border-width: 6px 0 6px 6px;
+}
+
+.tooltip-right .tooltip-arrow {
+    left: -6px;
+    top: 50%;
+    margin-top: -6px;
+    border-width: 6px 6px 6px 0;
+}
+
+/* Arrow colors for different themes */
+.tooltip-dark .tooltip-arrow {
+    border-color: #333 transparent transparent transparent;
+}
+
+.tooltip-dark.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent #333 transparent;
+}
+
+.tooltip-dark.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent #333;
+}
+
+.tooltip-dark.tooltip-right .tooltip-arrow {
+    border-color: transparent #333 transparent transparent;
+}
+
+.tooltip-light .tooltip-arrow {
+    border-color: white transparent transparent transparent;
+}
+
+.tooltip-light.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent white transparent;
+}
+
+.tooltip-light.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent white;
+}
+
+.tooltip-light.tooltip-right .tooltip-arrow {
+    border-color: transparent white transparent transparent;
+}
+
+.tooltip-success .tooltip-arrow {
+    border-color: #28a745 transparent transparent transparent;
+}
+
+.tooltip-success.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent #28a745 transparent;
+}
+
+.tooltip-success.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent #28a745;
+}
+
+.tooltip-success.tooltip-right .tooltip-arrow {
+    border-color: transparent #28a745 transparent transparent;
+}
+
+.tooltip-error .tooltip-arrow {
+    border-color: #dc3545 transparent transparent transparent;
+}
+
+.tooltip-error.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent #dc3545 transparent;
+}
+
+.tooltip-error.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent #dc3545;
+}
+
+.tooltip-error.tooltip-right .tooltip-arrow {
+    border-color: transparent #dc3545 transparent transparent;
+}
+
+.tooltip-warning .tooltip-arrow {
+    border-color: #ffc107 transparent transparent transparent;
+}
+
+.tooltip-warning.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent #ffc107 transparent;
+}
+
+.tooltip-warning.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent #ffc107;
+}
+
+.tooltip-warning.tooltip-right .tooltip-arrow {
+    border-color: transparent #ffc107 transparent transparent;
+}
+
+.tooltip-info .tooltip-arrow {
+    border-color: #17a2b8 transparent transparent transparent;
+}
+
+.tooltip-info.tooltip-bottom .tooltip-arrow {
+    border-color: transparent transparent #17a2b8 transparent;
+}
+
+.tooltip-info.tooltip-left .tooltip-arrow {
+    border-color: transparent transparent transparent #17a2b8;
+}
+
+.tooltip-info.tooltip-right .tooltip-arrow {
+    border-color: transparent #17a2b8 transparent transparent;
+}
+
+/* Responsive tooltips */
+@media (max-width: 480px) {
+    .tooltip {
+        max-width: 200px;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
     .container {

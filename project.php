@@ -230,15 +230,15 @@ $mysqli->close();
                             </div>
                         </div>
                         <div class="member-actions">
-                            <span class="role-badge role-<?php echo $member['role']; ?>">
+                            <span class="role-badge role-<?php echo $member['role']; ?>" 
+                                  data-tooltip="User role: <?php echo ucfirst($member['role']); ?>">
                                 <?php echo ucfirst($member['role']); ?>
                             </span>
                             <?php if ($is_admin && $member['user_id'] != $_SESSION['user_id']): ?>
-                                <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this member?');">
-                                    <input type="hidden" name="action" value="remove_member">
-                                    <input type="hidden" name="user_id" value="<?php echo $member['user_id']; ?>">
-                                    <button type="submit" class="btn btn-danger">Remove</button>
-                                </form>
+                                <button type="button" class="btn btn-danger remove-member-btn" 
+                                        data-user-id="<?php echo $member['user_id']; ?>"
+                                        data-tooltip="Remove <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?> from project"
+                                        data-tooltip-theme="error">Remove</button>
                             <?php endif; ?>
                         </div>
                     </li>
@@ -248,8 +248,7 @@ $mysqli->close();
             <?php if ($is_admin): ?>
                 <div class="add-member-form">
                     <h4>Add New Member</h4>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="add_member">
+                    <form id="add-member-form">
                         <div class="form-group small">
                             <label for="email">Email Address</label>
                             <input type="email" id="email" name="email" required placeholder="Enter user's email address">
@@ -330,5 +329,101 @@ $mysqli->close();
             </div>
         <?php endif; ?>
     </div>
+    
+    <script src="assets/js/toast.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/tooltips.js"></script>
+    <script>
+        // Show success toast if project was just created
+        <?php if (isset($_GET['created']) && $_GET['created'] === '1'): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastSuccess('Project created successfully!');
+                // Clean URL without reloading
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname + '?id=<?php echo $project_id; ?>');
+                }
+            });
+        <?php endif; ?>
+        
+        // Show error toast if there's an error
+        <?php if ($error): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastError(<?php echo json_encode($error); ?>);
+            });
+        <?php endif; ?>
+        
+        // Show success toast if there's a success message
+        <?php if ($success): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastSuccess(<?php echo json_encode($success); ?>);
+            });
+        <?php endif; ?>
+        
+        // AJAX Member Management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle add member form
+            const addMemberForm = document.getElementById('add-member-form');
+            if (addMemberForm) {
+                addMemberForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const email = formData.get('email');
+                    
+                    try {
+                        const response = await api.post('api/member-actions.php', {
+                            action: 'add_member',
+                            project_id: <?php echo $project_id; ?>,
+                            email: email
+                        });
+                        
+                        toastSuccess(response.message || 'Member added successfully');
+                        this.reset();
+                        // Reload page to show new member
+                        setTimeout(() => window.location.reload(), 1000);
+                        
+                    } catch (error) {
+                        // Error toast already shown by api.js
+                    }
+                });
+            }
+            
+            // Handle remove member buttons
+            document.addEventListener('click', async function(e) {
+                if (e.target.matches('.remove-member-btn')) {
+                    e.preventDefault();
+                    
+                    if (!confirm('Are you sure you want to remove this member?')) {
+                        return;
+                    }
+                    
+                    const userId = e.target.getAttribute('data-user-id');
+                    const memberItem = e.target.closest('.member-item');
+                    
+                    try {
+                        const response = await api.post('api/member-actions.php', {
+                            action: 'remove_member',
+                            project_id: <?php echo $project_id; ?>,
+                            user_id: parseInt(userId)
+                        });
+                        
+                        toastSuccess(response.message || 'Member removed successfully');
+                        
+                        // Remove member from UI with animation
+                        if (memberItem) {
+                            memberItem.style.opacity = '0.5';
+                            memberItem.style.transform = 'translateX(-10px)';
+                            setTimeout(() => {
+                                memberItem.remove();
+                            }, 300);
+                        }
+                        
+                    } catch (error) {
+                        // Error toast already shown by api.js
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

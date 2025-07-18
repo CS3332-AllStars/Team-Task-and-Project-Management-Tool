@@ -174,5 +174,21 @@ $mysqli->close();
             <p>Simple Dashboard - Authentication Testing Complete</p>
         </div>
     </div>
+    
+    <script src="assets/js/toast.js"></script>
+    <script>
+        // Welcome message for authenticated users
+        document.addEventListener('DOMContentLoaded', function() {
+            // Only show welcome message on first load, not when returning from other pages
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('welcome') === '1') {
+                toastInfo('Welcome to your project dashboard!');
+                // Clean URL without reloading
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

@@ -128,5 +128,22 @@ $mysqli->close();
             </div>
         </form>
     </div>
+    
+    <script src="assets/js/toast.js"></script>
+    <script>
+        // Show error toast if there's an error
+        <?php if ($error): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastError(<?php echo json_encode($error); ?>);
+            });
+        <?php endif; ?>
+        
+        // Show success toast if there's a success message
+        <?php if ($success): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastSuccess(<?php echo json_encode($success); ?>);
+            });
+        <?php endif; ?>
+    </script>
 </body>
 </html>

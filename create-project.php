@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Commit transaction
             $mysqli->commit();
             
-            // Redirect to project view
-            header("Location: project.php?id=" . $project_id);
+            // Redirect to project view with success message
+            header("Location: project.php?id=" . $project_id . "&created=1");
             exit;
             
         } catch (Exception $e) {
@@ -91,7 +91,7 @@ $mysqli->close();
             <div class="success"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="">
+        <form id="create-project-form" method="POST" action="">
             <div class="form-group">
                 <label for="title">Project Title *</label>
                 <input type="text" id="title" name="title" required maxlength="255" 
@@ -115,5 +115,47 @@ $mysqli->close();
             <p><small>You will automatically become the project administrator</small></p>
         </div>
     </div>
+    
+    <script src="assets/js/toast.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script>
+        // Show error toast if there's an error
+        <?php if ($error): ?>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastError(<?php echo json_encode($error); ?>);
+            });
+        <?php endif; ?>
+        
+        // AJAX form submission for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            const createForm = document.getElementById('create-project-form');
+            if (createForm) {
+                createForm.addEventListener('submit', async function(e) {
+                    // If user prefers traditional form submission, allow it
+                    // This provides progressive enhancement
+                    if (!window.api) {
+                        return; // Let traditional form submission handle it
+                    }
+                    
+                    e.preventDefault();
+                    
+                    try {
+                        const formData = new FormData(this);
+                        await api.submitForm(this, {
+                            successMessage: 'Project created successfully! Redirecting...'
+                        });
+                        
+                        // Redirect after successful creation
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.php';
+                        }, 1500);
+                        
+                    } catch (error) {
+                        // Error toast already shown by api.js
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
