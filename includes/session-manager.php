@@ -7,9 +7,17 @@ function startSecureSession() {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
     ini_set('session.cookie_secure', 0); // Set to 1 for HTTPS
+    ini_set('session.gc_maxlifetime', 1800); // 30 minutes
+    ini_set('session.cookie_lifetime', 0); // Session cookie (expires when browser closes)
     
     session_start();
-    session_regenerate_id(true);
+    
+    // Only regenerate session ID occasionally to prevent conflicts
+    // Check if we need to regenerate (every 5 minutes or if not set)
+    if (!isset($_SESSION['last_regenerate']) || (time() - $_SESSION['last_regenerate'] > 300)) {
+        session_regenerate_id(true);
+        $_SESSION['last_regenerate'] = time();
+    }
     
     // Track session activity
     $_SESSION['last_active'] = time();
@@ -21,10 +29,13 @@ function startSecureSession() {
 }
 
 function checkSessionTimeout($timeout = 900) { // 15 minutes default
-    if (isset($_SESSION['last_active']) && 
-        (time() - $_SESSION['last_active'] > $timeout)) {
-        destroySession();
-        return false;
+    if (isset($_SESSION['last_active'])) {
+        $timeSinceActive = time() - $_SESSION['last_active'];
+        
+        if ($timeSinceActive > $timeout) {
+            destroySession();
+            return false;
+        }
     }
     $_SESSION['last_active'] = time();
     return true;
@@ -49,5 +60,23 @@ function requireLogin() {
         header('Location: login.php');
         exit;
     }
+}
+
+function getSessionInfo() {
+    if (!isset($_SESSION['last_active'])) {
+        return ['status' => 'no_session', 'message' => 'No session data'];
+    }
+    
+    $timeSinceActive = time() - $_SESSION['last_active'];
+    $timeRemaining = 900 - $timeSinceActive; // 15 minutes - time since active
+    
+    return [
+        'status' => 'active',
+        'last_active' => $_SESSION['last_active'],
+        'time_since_active' => $timeSinceActive,
+        'time_remaining' => $timeRemaining,
+        'session_id' => session_id(),
+        'user_id' => $_SESSION['user_id'] ?? 'not_set'
+    ];
 }
 ?>

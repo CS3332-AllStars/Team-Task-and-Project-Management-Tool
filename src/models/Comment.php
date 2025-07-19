@@ -52,7 +52,7 @@ class Comment {
      */
     public function getById($commentId) {
         try {
-            $sql = "SELECT c.*, u.username, u.full_name, u.email
+            $sql = "SELECT c.*, u.username, u.name, u.email
                     FROM comments c 
                     JOIN users u ON c.user_id = u.user_id
                     WHERE c.comment_id = ?";
@@ -83,7 +83,6 @@ class Comment {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch (PDOException $e) {
-            error_log("getByTask error: " . $e->getMessage());
             return [];
         }
     }
@@ -207,7 +206,7 @@ class Comment {
             $searchTerm = '%' . $query . '%';
             
             if ($projectId) {
-                $sql = "SELECT c.*, u.username, u.full_name, t.title as task_title
+                $sql = "SELECT c.*, u.username, u.name, t.title as task_title
                         FROM comments c 
                         JOIN users u ON c.user_id = u.user_id
                         JOIN tasks t ON c.task_id = t.task_id
@@ -217,7 +216,7 @@ class Comment {
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute([$projectId, $searchTerm, $limit]);
             } else {
-                $sql = "SELECT c.*, u.username, u.full_name, t.title as task_title, p.title as project_title
+                $sql = "SELECT c.*, u.username, u.name, t.title as task_title, p.title as project_title
                         FROM comments c 
                         JOIN users u ON c.user_id = u.user_id
                         JOIN tasks t ON c.task_id = t.task_id

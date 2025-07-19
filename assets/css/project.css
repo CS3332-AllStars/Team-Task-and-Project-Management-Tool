@@ -1563,6 +1563,29 @@ body {
     font-size: 11px;
 }
 
+.timestamp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.original-time {
+    color: #666;
+    font-size: 11px;
+}
+
+.edited-time {
+    color: #999;
+    font-size: 10px;
+    font-style: italic;
+}
+
+.edited-indicator {
+    color: #999;
+    font-style: italic;
+    font-size: 10px;
+}
+
 .comment-actions {
     display: flex;
     gap: 8px;
@@ -1701,6 +1724,15 @@ body {
     .comment-form textarea {
         min-height: 60px;
         font-size: 13px;
+    }
+    
+    .timestamp-info {
+        gap: 1px;
+    }
+    
+    .original-time,
+    .edited-time {
+        font-size: 10px;
     }
     
     .btn-small {

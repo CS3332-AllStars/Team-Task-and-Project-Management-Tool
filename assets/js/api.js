@@ -110,6 +110,20 @@ class APIManager {
     async handleResponse(response, options = {}) {
         // Check if response is ok
         if (!response.ok) {
+            // For 401 responses, try to parse JSON to get the proper error message
+            if (response.status === 401) {
+                try {
+                    const errorData = await response.json();
+                    const error = new Error(errorData.message || 'Session expired');
+                    error.status = 401;
+                    error.data = errorData;
+                    throw error;
+                } catch (parseError) {
+                    const error = new Error('Session expired - please login again');
+                    error.status = 401;
+                    throw error;
+                }
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -148,6 +162,13 @@ class APIManager {
         } else if (error.message.includes('Failed to fetch')) {
             processedError = new Error('Network error - please check your connection');
             processedError.type = 'network';
+        } else if (error.status === 401 || error.message.includes('HTTP 401') || error.message.includes('Session expired')) {
+            processedError = new Error('Session expired - please login again');
+            processedError.type = 'auth';
+            // Redirect to login after a short delay
+            setTimeout(() => {
+                window.location.href = 'login.php';
+            }, 2000);
         } else if (error.message.includes('HTTP 40')) {
             processedError = new Error('Client error - please check your request');
             processedError.type = 'client';

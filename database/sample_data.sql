@@ -18,13 +18,13 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Test Users - covers different permission levels per test plan
 -- Passwords are all 'password123' hashed with PHP password_hash()
 INSERT INTO users (user_id, username, email, password_hash, name) VALUES
-(1, 'james_ward', 'james.ward@allstars.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'James Ward'),
-(2, 'summer_hill', 'summer.hill@allstars.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Summer Hill'),
-(3, 'juan_ledet', 'juan.ledet@allstars.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Juan Ledet'),
-(4, 'alaric_higgins', 'alaric.higgins@allstars.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Alaric Higgins'),
-(5, 'test_member', 'member@test.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Test Member'),
-(6, 'project_admin', 'admin@test.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Project Admin'),
-(7, 'new_user', 'newuser@test.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'New User Test');
+(1, 'james_ward', 'james.ward@allstars.edu', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'James Ward'),
+(2, 'summer_hill', 'summer.hill@allstars.edu', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'Summer Hill'),
+(3, 'juan_ledet', 'juan.ledet@allstars.edu', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'Juan Ledet'),
+(4, 'alaric_higgins', 'alaric.higgins@allstars.edu', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'Alaric Higgins'),
+(5, 'test_member', 'member@test.com', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'Test Member'),
+(6, 'project_admin', 'admin@test.com', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'Project Admin'),
+(7, 'new_user', 'newuser@test.com', '$2y$10$zzkU/INsuAPUBxXOETfXquyJctY/4rk5O4PtVVjMIkE8/Kn4zdxWq', 'New User Test');
 
 -- Sample Projects - varying complexity levels per test plan
 INSERT INTO projects (project_id, title, description, created_date) VALUES

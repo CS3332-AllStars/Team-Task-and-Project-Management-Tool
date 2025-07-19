@@ -5,7 +5,7 @@
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
-require_once '../includes/session-check.php';
+require_once '../includes/api-session-check.php';
 
 // Database connection
 $host = 'localhost';

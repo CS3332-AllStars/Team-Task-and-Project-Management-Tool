@@ -328,7 +328,7 @@ $mysqli->close();
             <div class="section-header">
                 <h3>Task Management</h3>
                 <button id="create-task-btn" class="btn btn-success" 
-                        onclick="console.log('Direct onclick called'); showTaskModal(); return false;"
+                        onclick="showTaskModal(); return false;"
                         data-tooltip="Create a new task for this project">
                     + Create Task
                 </button>
@@ -515,28 +515,21 @@ $mysqli->close();
     </div>
     
     <script>
-        console.log('Script block starting...');
-        console.log('Current user test:', <?php echo json_encode($currentUser); ?>);
         
         // Define showTaskModal function in its own script block
         function showTaskModal() {
-            console.log('showTaskModal called');
             const taskModal = document.getElementById('task-modal');
-            console.log('Task modal element:', taskModal);
             if (taskModal) {
-                console.log('Task modal found, current display:', taskModal.style.display);
                 taskModal.style.display = 'flex';
                 taskModal.style.visibility = 'visible';
                 taskModal.style.opacity = '1';
                 taskModal.style.zIndex = '9999';
-                console.log('Task modal display set to flex');
                 document.body.style.overflow = 'hidden';
                 
                 // Reset form
                 const taskForm = document.getElementById('task-form');
                 if (taskForm) {
                     taskForm.reset();
-                    console.log('Form reset');
                 }
                 
                 // Set default values
@@ -548,13 +541,9 @@ $mysqli->close();
                 if (saveBtn) saveBtn.textContent = 'Create Task';
                 if (taskStatus) taskStatus.value = 'To Do';
                 
-                console.log('Modal should be visible now');
-            } else {
-                console.error('Task modal not found!');
             }
         }
         
-        console.log('showTaskModal function defined successfully');
         
         // Hide modal function
         function hideTaskModal() {
@@ -565,7 +554,6 @@ $mysqli->close();
             }
         }
         
-        console.log('hideTaskModal function defined successfully');
         
         // Handle task form submission
         async function handleTaskSubmit(event) {
@@ -589,7 +577,6 @@ $mysqli->close();
                 taskData.assignees.push(parseInt(checkbox.value));
             });
             
-            console.log('Submitting task data:', taskData);
             
             try {
                 const response = await fetch('api/tasks.php?action=create', {
@@ -603,19 +590,14 @@ $mysqli->close();
                 
                 // Log the raw response first
                 const responseText = await response.text();
-                console.log('Raw response:', responseText);
-                console.log('Response status:', response.status);
                 
                 // Try to parse JSON
                 let result;
                 try {
                     result = JSON.parse(responseText);
                 } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    console.error('Response was:', responseText);
-                    throw new Error('Server returned invalid JSON: ' + responseText.substring(0, 200));
+                    throw new Error('Server returned invalid JSON');
                 }
-                console.log('Task creation result:', result);
                 
                 if (result.success) {
                     // Show success message
@@ -660,7 +642,6 @@ $mysqli->close();
             
             if (taskForm) {
                 taskForm.addEventListener('submit', handleTaskSubmit);
-                console.log('Task form submit handler attached');
             }
             
             if (cancelBtn) {
@@ -672,22 +653,15 @@ $mysqli->close();
             }
         });
         
-        console.log('First script block completed successfully');
     </script>
     
-    <!-- Test script to isolate issue -->
-    <script>
-        console.log('Test script block running...');
-    </script>
     
     <script src="assets/js/toast.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/tooltips.js"></script>
     <script>
-        console.log('Second script block starting...');
         
         // Test basic functionality first
-        console.log('About to process PHP conditionals...');
         
         // Show success toast if project was just created
         /* <?php if (isset($_GET['created']) && $_GET['created'] === '1'): ?>
@@ -701,20 +675,19 @@ $mysqli->close();
         <?php endif; ?> */
         
         // Show error toast if there's an error
-        /* <?php if ($error): ?>
+        /* <?php if (isset($error) && $error): ?>
             document.addEventListener('DOMContentLoaded', function() {
                 toastError(<?php echo json_encode($error); ?>);
             });
         <?php endif; ?>
         
         // Show success toast if there's a success message
-        <?php if ($success): ?>
+        <?php if (isset($message) && $message): ?>
             document.addEventListener('DOMContentLoaded', function() {
-                toastSuccess(<?php echo json_encode($success); ?>);
+                toastSuccess(<?php echo json_encode($message); ?>);
             });
         <?php endif; ?> */
         
-        console.log('Second script block running successfully!');
         
         // AJAX Member Management
         document.addEventListener('DOMContentLoaded', function() {
@@ -783,11 +756,9 @@ $mysqli->close();
         });
         
         // Task Management JavaScript - CS3-13B, CS3-13C, CS3-13D
-        console.log('About to define TaskManager class...');
         
         class TaskManager {
             constructor(projectId) {
-                console.log('TaskManager constructor called with project ID:', projectId);
                 this.projectId = projectId;
                 this.tasks = [];
                 this.currentTask = null;
@@ -813,11 +784,8 @@ $mysqli->close();
                 
                 if (createBtn) {
                     createBtn.addEventListener('click', () => {
-                        console.log('Create task button clicked');
                         this.showCreateModal();
                     });
-                } else {
-                    console.error('Create task button not found');
                 }
                 
                 if (createFirstBtn) {
@@ -859,16 +827,12 @@ $mysqli->close();
             }
             
             async loadTasks() {
-                console.log('loadTasks called, project ID:', this.projectId);
                 try {
                     const url = `api/tasks.php?action=project&project_id=${this.projectId}`;
-                    console.log('Fetching tasks from:', url);
                     
                     const response = await api.get(url);
-                    console.log('Tasks response:', response);
                     
                     this.tasks = response.tasks || [];
-                    console.log('Tasks loaded:', this.tasks.length);
                     this.renderTasks();
                 } catch (error) {
                     console.error('Failed to load tasks:', error);
@@ -1031,7 +995,6 @@ $mysqli->close();
             }
             
             showCreateModal() {
-                console.log('showCreateModal called');
                 this.currentTask = null;
                 
                 const modalTitle = document.getElementById('modal-title');
@@ -1239,7 +1202,7 @@ $mysqli->close();
                         const response = await api.get(`api/comments.php?action=count&task_id=${task.task_id}`);
                         const countEl = document.querySelector(`[data-task-id="${task.task_id}"] .comment-count`);
                         if (countEl) {
-                            countEl.textContent = response.count || '0';
+                            countEl.textContent = response.data?.count || '0';
                         }
                     } catch (error) {
                         console.error(`Failed to load comment count for task ${task.task_id}:`, error);
@@ -1251,9 +1214,7 @@ $mysqli->close();
                 try {
                     // Load task details
                     const url = `api/tasks.php?action=detail&task_id=${taskId}`;
-                    console.log('Loading task details from:', url);
                     const taskResponse = await api.get(url);
-                    console.log('Task detail response:', taskResponse);
                     const task = taskResponse.task;
                     
                     // Populate task details
@@ -1262,11 +1223,9 @@ $mysqli->close();
                     document.getElementById('comment-task-id').value = taskId;
                     
                     // Load comments
-                    console.log('About to load comments for task:', taskId);
                     this.loadComments(taskId);
                     
                     // Show modal
-                    console.log('Showing task detail modal for task:', taskId);
                     document.getElementById('task-detail-modal').style.display = 'flex';
                     document.body.style.overflow = 'hidden';
                     
@@ -1324,25 +1283,11 @@ $mysqli->close();
             async loadComments(taskId) {
                 try {
                     const url = `api/comments.php?action=task&task_id=${taskId}`;
-                    console.log('Loading comments from:', url);
                     const response = await api.get(url);
-                    console.log('Comments response:', response);
-                    console.log('Response success:', response.success);
-                    console.log('Response comments array:', response.comments);
-                    const comments = response.comments || [];
-                    console.log('Comments loaded:', comments.length);
+                    const comments = response.data?.comments || [];
                     
                     if (comments.length === 0) {
-                        console.log('No comments found - checking if this is expected');
-                        // Let's test the count API for comparison
-                        console.log('Testing comment count API for task:', taskId);
-                        api.get(`api/comments.php?action=count&task_id=${taskId}`)
-                            .then(countResponse => {
-                                console.log('Comment count API response:', countResponse);
-                            })
-                            .catch(countError => {
-                                console.log('Comment count API error:', countError);
-                            });
+                        // No comments found
                     }
                     
                     const commentsList = document.getElementById('comments-list');
@@ -1356,6 +1301,7 @@ $mysqli->close();
                         commentsList.style.display = 'block';
                         commentsList.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
                         this.bindCommentEvents();
+                        this.scrollToNewestComment();
                     }
                     
                 } catch (error) {
@@ -1365,17 +1311,27 @@ $mysqli->close();
             }
             
             renderComment(comment) {
-                // Temporarily comment out to test
                 const currentUserId = <?php echo isset($currentUser['user_id']) ? json_encode($currentUser['user_id']) : 'null'; ?>;
                 const isOwner = comment.user_id == currentUserId;
+                
                 
                 return `
                     <div class="comment" data-comment-id="${comment.comment_id}">
                         <div class="comment-header">
                             <div class="comment-author">
                                 <strong>${this.escapeHtml(comment.name || comment.username)}</strong>
-                                <small class="comment-time" title="${comment.timestamp}">
-                                    ${this.formatRelativeTime(comment.timestamp)}
+                                <small class="comment-time">
+                                    ${comment.updated_at && comment.updated_at !== comment.timestamp ? 
+                                        `<div class="timestamp-info">
+                                            <span class="original-time" title="Originally posted: ${comment.timestamp}">
+                                                Posted ${this.formatRelativeTime(comment.timestamp)}
+                                            </span>
+                                            <span class="edited-time" title="Last edited: ${comment.updated_at}">
+                                                • Edited ${this.formatRelativeTime(comment.updated_at)}
+                                            </span>
+                                        </div>` : 
+                                        `<span title="${comment.timestamp}">${this.formatRelativeTime(comment.timestamp)}</span>`
+                                    }
                                 </small>
                             </div>
                             ${isOwner ? `
@@ -1435,8 +1391,9 @@ $mysqli->close();
             
             async showEditCommentModal(commentId) {
                 try {
-                    const response = await api.get(`api/comments.php?action=detail&comment_id=${commentId}`);
-                    const comment = response.comment;
+                    const url = `api/comments.php?action=detail&comment_id=${commentId}`;
+                    const response = await api.get(url);
+                    const comment = response.data?.comment;
                     
                     document.getElementById('edit-comment-id').value = commentId;
                     document.getElementById('edit-comment-content').value = comment.content;
@@ -1491,7 +1448,7 @@ $mysqli->close();
                     const response = await api.get(`api/comments.php?action=count&task_id=${taskId}`);
                     const countEl = document.querySelector(`[data-task-id="${taskId}"] .comment-count`);
                     if (countEl) {
-                        countEl.textContent = response.count || '0';
+                        countEl.textContent = response.data?.count || '0';
                     }
                 } catch (error) {
                     console.error('Failed to update comment count:', error);
@@ -1513,6 +1470,34 @@ $mysqli->close();
                     } else {
                         counter.style.color = '#666';
                     }
+                }
+            }
+            
+            scrollToNewestComment() {
+                const commentsList = document.getElementById('comments-list');
+                if (commentsList && commentsList.children.length > 0) {
+                    // Get the last comment (newest)
+                    const lastComment = commentsList.lastElementChild;
+                    
+                    // Smooth scroll to the newest comment
+                    lastComment.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                    
+                    // Alternative: scroll the comments container to bottom
+                    // This ensures the newest comment is visible even if scrollIntoView doesn't work perfectly
+                    setTimeout(() => {
+                        commentsList.scrollTop = commentsList.scrollHeight;
+                    }, 100);
+                    
+                    // Add a subtle highlight effect to the newest comment
+                    lastComment.style.transition = 'background-color 0.3s ease';
+                    lastComment.style.backgroundColor = '#f0f8ff';
+                    setTimeout(() => {
+                        lastComment.style.backgroundColor = '';
+                    }, 2000);
                 }
             }
         }
@@ -1630,35 +1615,25 @@ $mysqli->close();
         };
         
         // Initialize task manager
-        console.log('About to create TaskManager instance...');
         try {
             window.taskManager = new TaskManager(<?php echo $project_id; ?>);
-            console.log('TaskManager created successfully:', window.taskManager);
         } catch (error) {
-            console.error('Failed to create TaskManager:', error);
+            // TaskManager initialization failed - will use fallback
         }
         
-        // Debug: Test basic functionality
-        console.log('Script loaded successfully');
-        console.log('Project ID:', <?php echo $project_id; ?>);
         
         
         // Separate initialization for task management to ensure it works
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded');
-            console.log('Create button exists:', !!document.getElementById('create-task-btn'));
             // Backup initialization in case of timing issues
             if (!window.taskManager && document.getElementById('create-task-btn')) {
-                console.log('Initializing backup task manager');
                 window.taskManager = new TaskManager(<?php echo $project_id; ?>);
             }
             
             // Direct fallback event listener for create task button
             const createTaskBtn = document.getElementById('create-task-btn');
             if (createTaskBtn && !createTaskBtn.hasAttribute('data-listener-added')) {
-                console.log('Adding fallback create task listener');
                 createTaskBtn.addEventListener('click', function() {
-                    console.log('Fallback create task button clicked');
                     showTaskModal();
                 });
                 createTaskBtn.setAttribute('data-listener-added', 'true');

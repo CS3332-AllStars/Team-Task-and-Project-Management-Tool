@@ -3,7 +3,7 @@
 // Task API Endpoints - CS3-13B, CS3-13C, CS3-13D Implementation
 
 header('Content-Type: application/json');
-require_once '../includes/session-check.php';
+require_once '../includes/api-session-check.php';
 require_once '../src/config/database.php';
 require_once '../src/models/Task.php';
 require_once '../src/models/Project.php';
