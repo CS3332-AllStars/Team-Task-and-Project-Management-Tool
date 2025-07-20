@@ -1,6 +1,7 @@
 <?php
 // CS3332 AllStars Team Task & Project Management System
 // Project View Page - FR-9, FR-11
+// CS3-13A frontend validation logic contributed by Juan Ledet
 
 require_once 'includes/session-check.php';
 
@@ -273,28 +274,28 @@ $mysqli->close();
             <div class="task-metrics-grid">
                 <div class="metric-card">
                     <h4 class="metric-title">Total Tasks</h4>
-                    <div class="metric-value total">
+                    <div class="metric-value total" id="total-tasks-count">
                         <?php echo $taskMetrics['total_tasks']; ?>
                     </div>
                 </div>
                 
                 <div class="metric-card">
                     <h4 class="metric-title">Completed</h4>
-                    <div class="metric-value completed">
+                    <div class="metric-value completed" id="completed-tasks-count">
                         <?php echo $taskMetrics['completed_tasks']; ?>
                     </div>
                 </div>
                 
                 <div class="metric-card">
                     <h4 class="metric-title">In Progress</h4>
-                    <div class="metric-value in-progress">
+                    <div class="metric-value in-progress" id="in-progress-tasks-count">
                         <?php echo $taskMetrics['in_progress_tasks']; ?>
                     </div>
                 </div>
                 
                 <div class="metric-card">
                     <h4 class="metric-title">To Do</h4>
-                    <div class="metric-value todo">
+                    <div class="metric-value todo" id="todo-tasks-count">
                         <?php echo $taskMetrics['todo_tasks']; ?>
                     </div>
                 </div>
@@ -306,13 +307,13 @@ $mysqli->close();
                 <div class="project-progress">
                     <div class="progress-label">
                         <span><strong>Completion Status</strong></span>
-                        <span><strong><?php echo $taskMetrics['completion_percentage']; ?>%</strong></span>
+                        <span><strong id="completion-percentage"><?php echo $taskMetrics['completion_percentage']; ?>%</strong></span>
                     </div>
                     <div class="progress-bar large">
                         <div class="progress-fill <?php echo $taskMetrics['completion_percentage'] == 0 ? 'zero' : ''; ?>" 
-                             style="width: <?php echo $taskMetrics['completion_percentage']; ?>%"></div>
+                             id="progress-fill" style="width: <?php echo $taskMetrics['completion_percentage']; ?>%"></div>
                     </div>
-                    <div class="progress-details">
+                    <div class="progress-details" id="progress-details">
                         <?php if ($taskMetrics['total_tasks'] > 0): ?>
                             <?php echo $taskMetrics['completed_tasks']; ?> of <?php echo $taskMetrics['total_tasks']; ?> tasks completed
                         <?php else: ?>
@@ -334,39 +335,133 @@ $mysqli->close();
                 </button>
             </div>
             
-            <!-- Task Filters -->
-            <div class="task-filters">
-                <select id="status-filter" class="filter-select">
-                    <option value="">All Statuses</option>
-                    <option value="To Do">To Do</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Done">Done</option>
-                </select>
+            <!-- View Toggle & Filters -->
+            <div class="task-controls">
+                <div class="view-toggle">
+                    <button id="list-view-btn" class="btn btn-secondary active" data-tooltip="List view">
+                        📋 List
+                    </button>
+                    <button id="kanban-view-btn" class="btn btn-secondary" data-tooltip="Kanban board">
+                        🗂️ Kanban
+                    </button>
+                    <button id="calendar-view-btn" class="btn btn-secondary" data-tooltip="Calendar view">
+                        📅 Calendar
+                    </button>
+                    <button id="mytasks-view-btn" class="btn btn-secondary" data-tooltip="My tasks">
+                        👤 My Tasks
+                    </button>
+                    <button id="team-view-btn" class="btn btn-secondary" data-tooltip="Team view">
+                        👥 Team
+                    </button>
+                </div>
                 
-                <select id="assignee-filter" class="filter-select">
-                    <option value="">All Assignees</option>
-                    <option value="unassigned">Unassigned</option>
-                    <?php foreach ($members as $member): ?>
-                        <option value="<?php echo $member['user_id']; ?>">
-                            <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                
-                <input type="text" id="search-tasks" placeholder="Search tasks..." class="search-input">
+                <div class="task-filters">
+                    <select id="status-filter" class="filter-select">
+                        <option value="">All Statuses</option>
+                        <option value="To Do">To Do</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                    
+                    <select id="assignee-filter" class="filter-select">
+                        <option value="">All Assignees</option>
+                        <option value="unassigned">Unassigned</option>
+                        <?php foreach ($members as $member): ?>
+                            <option value="<?php echo $member['user_id']; ?>">
+                                <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    
+                    <input type="date" id="due-start-filter" class="filter-select" title="Due date from">
+                    <input type="date" id="due-end-filter" class="filter-select" title="Due date to">
+                    
+                    <input type="text" id="search-tasks" placeholder="Search tasks..." class="search-input">
+                    
+                    <button type="button" id="clear-filters-btn" class="btn btn-secondary btn-small" 
+                            data-tooltip="Clear all filters">Clear</button>
+                </div>
             </div>
             
-            <!-- Task List -->
-            <div id="task-list" class="task-list">
-                <div class="loading-message">Loading tasks...</div>
+            <!-- Task List View -->
+            <div id="task-list-view" class="task-list-view">
+                <div id="task-list" class="task-list">
+                    <div class="loading-message">Loading tasks...</div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📋</div>
+                    <h4>No tasks yet</h4>
+                    <p>Create your first task to get started with project management.</p>
+                    <button id="create-first-task-btn" class="btn btn-primary">Create First Task</button>
+                </div>
             </div>
             
-            <!-- Empty State -->
-            <div id="empty-state" class="empty-state" style="display: none;">
-                <div class="empty-icon">📋</div>
-                <h4>No tasks yet</h4>
-                <p>Create your first task to get started with project management.</p>
-                <button id="create-first-task-btn" class="btn btn-primary">Create First Task</button>
+            <!-- Kanban Board View -->
+            <div id="kanban-board" class="kanban-board" style="display: none;">
+                <div class="kanban-column" data-status="To Do">
+                    <div class="kanban-header">
+                        <h4>📝 To Do</h4>
+                        <span class="task-count" id="todo-count">0</span>
+                    </div>
+                    <div class="kanban-tasks" id="kanban-todo">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column" data-status="In Progress">
+                    <div class="kanban-header">
+                        <h4>⚡ In Progress</h4>
+                        <span class="task-count" id="progress-count">0</span>
+                    </div>
+                    <div class="kanban-tasks" id="kanban-progress">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="kanban-column" data-status="Done">
+                    <div class="kanban-header">
+                        <h4>✅ Done</h4>
+                        <span class="task-count" id="done-count">0</span>
+                    </div>
+                    <div class="kanban-tasks" id="kanban-done">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Calendar View - CS3-13G -->
+            <div id="calendar-view" class="calendar-view" style="display: none;">
+                <div class="calendar-header">
+                    <h4>📅 Calendar View</h4>
+                    <p class="text-muted">Tasks organized by due date</p>
+                </div>
+                <div id="calendar-content" class="calendar-content">
+                    <div class="loading-message">Loading calendar...</div>
+                </div>
+            </div>
+            
+            <!-- My Tasks View - CS3-13G -->
+            <div id="mytasks-view" class="mytasks-view" style="display: none;">
+                <div class="mytasks-header">
+                    <h4>👤 My Tasks</h4>
+                    <p class="text-muted">Tasks assigned to you</p>
+                </div>
+                <div id="mytasks-content" class="mytasks-content">
+                    <div class="loading-message">Loading your tasks...</div>
+                </div>
+            </div>
+            
+            <!-- Team View - CS3-13G -->
+            <div id="team-view" class="team-view" style="display: none;">
+                <div class="team-header">
+                    <h4>👥 Team View</h4>
+                    <p class="text-muted">Tasks grouped by team member</p>
+                </div>
+                <div id="team-content" class="team-content">
+                    <div class="loading-message">Loading team tasks...</div>
+                </div>
             </div>
         </div>
 
@@ -438,7 +533,13 @@ $mysqli->close();
             <div class="modal-content large">
                 <div class="modal-header">
                     <h4 id="detail-modal-title">Task Details</h4>
-                    <button type="button" class="close-modal" data-modal="task-detail-modal" data-tooltip="Close modal">&times;</button>
+                    <div class="modal-actions">
+                        <button type="button" id="edit-task-modal-btn" class="btn btn-secondary btn-small" 
+                                data-tooltip="Edit task">✏️ Edit</button>
+                        <button type="button" id="delete-task-modal-btn" class="btn btn-danger btn-small" 
+                                data-tooltip="Delete task">🗑️ Delete</button>
+                        <button type="button" class="close-modal" data-modal="task-detail-modal" data-tooltip="Close modal">&times;</button>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <div id="task-detail-content">
@@ -554,6 +655,30 @@ $mysqli->close();
             }
         }
         
+        // Helper functions for validation
+        function showError(message) {
+            if (window.ToastManager) {
+                window.ToastManager.error(message);
+            } else {
+                alert(message);
+            }
+        }
+        
+        function isValidDate(dateString) {
+            if (!dateString) return true; // Allow empty dates
+            const regex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!regex.test(dateString)) return false;
+            
+            const date = new Date(dateString);
+            const timestamp = date.getTime();
+            
+            if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
+                return false;
+            }
+            
+            return date.toISOString().startsWith(dateString);
+        }
+        
         
         // Handle task form submission
         async function handleTaskSubmit(event) {
@@ -570,6 +695,25 @@ $mysqli->close();
                 due_date: formData.get('due_date') || null,
                 assignees: []
             };
+            
+            // Frontend validation
+            const title = taskData.title ? taskData.title.trim() : '';
+            const dueDate = taskData.due_date;
+            
+            // Validate title
+            if (title === '' || title.length > 100) {
+                showError('Title is required and must be under 100 characters.');
+                return;
+            }
+            
+            // Validate due date
+            if (dueDate && !isValidDate(dueDate)) {
+                showError('Please enter a valid due date.');
+                return;
+            }
+            
+            // Update title with trimmed value
+            taskData.title = title;
             
             // Get selected assignees
             const assigneeCheckboxes = form.querySelectorAll('input[name="assignees[]"]:checked');
@@ -611,9 +755,6 @@ $mysqli->close();
                     // Reload tasks if TaskManager exists
                     if (window.taskManager && typeof window.taskManager.loadTasks === 'function') {
                         window.taskManager.loadTasks();
-                    } else {
-                        // Fallback: reload the page
-                        window.location.reload();
                     }
                 } else {
                     // Show error message
@@ -634,15 +775,10 @@ $mysqli->close();
             }
         }
         
-        // Add form submit event listener when DOM is ready
+        // Add modal event listeners when DOM is ready (TaskManager handles form submission)
         document.addEventListener('DOMContentLoaded', function() {
-            const taskForm = document.getElementById('task-form');
             const cancelBtn = document.getElementById('cancel-task-btn');
             const closeBtn = document.querySelector('.close-modal');
-            
-            if (taskForm) {
-                taskForm.addEventListener('submit', handleTaskSubmit);
-            }
             
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', hideTaskModal);
@@ -710,7 +846,6 @@ $mysqli->close();
                         toastSuccess(response.message || 'Member added successfully');
                         this.reset();
                         // Reload page to show new member
-                        setTimeout(() => window.location.reload(), 1000);
                         
                     } catch (error) {
                         // Error toast already shown by api.js
@@ -762,15 +897,44 @@ $mysqli->close();
                 this.projectId = projectId;
                 this.tasks = [];
                 this.currentTask = null;
+                this.currentView = 'list'; // 'list' or 'kanban'
                 this.init();
             }
             
             init() {
                 this.bindEvents();
                 this.loadTasks();
+                this.startAutoRefresh();
             }
             
             bindEvents() {
+                // View toggle buttons
+                const listViewBtn = document.getElementById('list-view-btn');
+                const kanbanViewBtn = document.getElementById('kanban-view-btn');
+                const calendarViewBtn = document.getElementById('calendar-view-btn');
+                const mytasksViewBtn = document.getElementById('mytasks-view-btn');
+                const teamViewBtn = document.getElementById('team-view-btn');
+                
+                if (listViewBtn) {
+                    listViewBtn.addEventListener('click', () => this.switchView('list'));
+                }
+                
+                if (kanbanViewBtn) {
+                    kanbanViewBtn.addEventListener('click', () => this.switchView('kanban'));
+                }
+                
+                if (calendarViewBtn) {
+                    calendarViewBtn.addEventListener('click', () => this.switchView('calendar'));
+                }
+                
+                if (mytasksViewBtn) {
+                    mytasksViewBtn.addEventListener('click', () => this.switchView('mytasks'));
+                }
+                
+                if (teamViewBtn) {
+                    teamViewBtn.addEventListener('click', () => this.switchView('team'));
+                }
+                
                 // Modal controls with error handling
                 const createBtn = document.getElementById('create-task-btn');
                 const createFirstBtn = document.getElementById('create-first-task-btn');
@@ -779,7 +943,10 @@ $mysqli->close();
                 const taskForm = document.getElementById('task-form');
                 const statusFilter = document.getElementById('status-filter');
                 const assigneeFilter = document.getElementById('assignee-filter');
+                const dueStartFilter = document.getElementById('due-start-filter');
+                const dueEndFilter = document.getElementById('due-end-filter');
                 const searchInput = document.getElementById('search-tasks');
+                const clearFiltersBtn = document.getElementById('clear-filters-btn');
                 const taskModal = document.getElementById('task-modal');
                 
                 if (createBtn) {
@@ -814,8 +981,25 @@ $mysqli->close();
                     assigneeFilter.addEventListener('change', () => this.filterTasks());
                 }
                 
+                if (dueStartFilter) {
+                    dueStartFilter.addEventListener('change', () => this.filterTasks());
+                }
+                
+                if (dueEndFilter) {
+                    dueEndFilter.addEventListener('change', () => this.filterTasks());
+                }
+                
                 if (searchInput) {
-                    searchInput.addEventListener('input', () => this.filterTasks());
+                    // Debounce search input to avoid excessive API calls
+                    let searchTimeout;
+                    searchInput.addEventListener('input', () => {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => this.filterTasks(), 300);
+                    });
+                }
+                
+                if (clearFiltersBtn) {
+                    clearFiltersBtn.addEventListener('click', () => this.clearFilters());
                 }
                 
                 // Close modal on outside click
@@ -834,13 +1018,71 @@ $mysqli->close();
                     
                     this.tasks = response.tasks || [];
                     this.renderTasks();
+                    // Update dashboard metrics whenever tasks are loaded
+                    this.updateDashboardMetrics();
                 } catch (error) {
                     console.error('Failed to load tasks:', error);
                     this.showEmptyState();
                 }
             }
             
+            async loadViewData(view) {
+                try {
+                    let url, tasks;
+                    
+                    switch (view) {
+                        case 'list':
+                        case 'kanban':
+                            url = `api/tasks.php?action=project&project_id=${this.projectId}`;
+                            break;
+                        case 'calendar':
+                            url = `api/tasks.php?action=calendar&project_id=${this.projectId}`;
+                            break;
+                        case 'mytasks':
+                            url = `api/tasks.php?action=mytasks&project_id=${this.projectId}`;
+                            break;
+                        case 'team':
+                            url = `api/tasks.php?action=team&project_id=${this.projectId}`;
+                            break;
+                        default:
+                            url = `api/tasks.php?action=project&project_id=${this.projectId}`;
+                    }
+                    
+                    const response = await api.get(url);
+                    this.tasks = response.tasks || [];
+                    
+                    // Render the appropriate view
+                    this.renderTasks();
+                    this.updateDashboardMetricsFromAllTasks();
+                    
+                } catch (error) {
+                    console.error('Failed to load view data:', error);
+                    this.showEmptyState();
+                }
+            }
+            
             renderTasks() {
+                switch (this.currentView) {
+                    case 'kanban':
+                        this.renderKanban();
+                        break;
+                    case 'calendar':
+                        this.renderCalendar();
+                        break;
+                    case 'mytasks':
+                        this.renderMyTasks();
+                        break;
+                    case 'team':
+                        this.renderTeam();
+                        break;
+                    case 'list':
+                    default:
+                        this.renderList();
+                        break;
+                }
+            }
+            
+            renderList() {
                 const taskList = document.getElementById('task-list');
                 const emptyState = document.getElementById('empty-state');
                 
@@ -854,6 +1096,210 @@ $mysqli->close();
                 
                 // Bind task-specific events
                 this.bindTaskEvents();
+            }
+            
+            renderKanban() {
+                const emptyState = document.getElementById('empty-state');
+                
+                if (this.tasks.length === 0) {
+                    this.showEmptyState();
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // Group tasks by status
+                const tasksByStatus = {
+                    'To Do': this.tasks.filter(task => task.status === 'To Do'),
+                    'In Progress': this.tasks.filter(task => task.status === 'In Progress'),
+                    'Done': this.tasks.filter(task => task.status === 'Done')
+                };
+                
+                // Render tasks in each column
+                Object.keys(tasksByStatus).forEach(status => {
+                    const columnId = status === 'To Do' ? 'kanban-todo' : 
+                                   status === 'In Progress' ? 'kanban-progress' : 'kanban-done';
+                    const countId = status === 'To Do' ? 'todo-count' : 
+                                  status === 'In Progress' ? 'progress-count' : 'done-count';
+                    
+                    const column = document.getElementById(columnId);
+                    const countEl = document.getElementById(countId);
+                    
+                    if (column && countEl) {
+                        const tasks = tasksByStatus[status];
+                        countEl.textContent = tasks.length;
+                        column.innerHTML = tasks.map(task => this.renderKanbanCard(task)).join('');
+                    }
+                });
+                
+                // Setup drag and drop without delays
+                this.setupDragAndDrop();
+                this.bindKanbanEvents();
+            }
+            
+            renderCalendar() {
+                const calendarContent = document.getElementById('calendar-content');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (this.tasks.length === 0) {
+                    calendarContent.innerHTML = '<div class="empty-calendar"><div class="empty-icon">📅</div><p>No tasks with due dates found</p></div>';
+                    return;
+                }
+                
+                // Group tasks by due date
+                const tasksByDate = {};
+                this.tasks.forEach(task => {
+                    const dueDate = task.due_date;
+                    if (!tasksByDate[dueDate]) {
+                        tasksByDate[dueDate] = [];
+                    }
+                    tasksByDate[dueDate].push(task);
+                });
+                
+                // Render calendar
+                const sortedDates = Object.keys(tasksByDate).sort();
+                let calendarHtml = '<div class="calendar-timeline">';
+                
+                sortedDates.forEach(date => {
+                    const tasks = tasksByDate[date];
+                    const dateObj = new Date(date);
+                    const isOverdue = dateObj < new Date() && tasks.some(t => t.status !== 'Done');
+                    
+                    calendarHtml += `
+                        <div class="calendar-date-group ${isOverdue ? 'overdue' : ''}">
+                            <div class="calendar-date-header">
+                                <h5>${dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h5>
+                                <span class="task-count">${tasks.length} task${tasks.length !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="calendar-tasks">
+                                ${tasks.map(task => this.renderCalendarTask(task)).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                calendarHtml += '</div>';
+                calendarContent.innerHTML = calendarHtml;
+            }
+            
+            renderMyTasks() {
+                const mytasksContent = document.getElementById('mytasks-content');
+                
+                if (this.tasks.length === 0) {
+                    mytasksContent.innerHTML = '<div class="empty-mytasks"><div class="empty-icon">👤</div><p>No tasks assigned to you</p></div>';
+                    return;
+                }
+                
+                // Group by status
+                const tasksByStatus = {
+                    'To Do': this.tasks.filter(task => task.status === 'To Do'),
+                    'In Progress': this.tasks.filter(task => task.status === 'In Progress'),
+                    'Done': this.tasks.filter(task => task.status === 'Done')
+                };
+                
+                let mytasksHtml = '<div class="mytasks-groups">';
+                
+                Object.keys(tasksByStatus).forEach(status => {
+                    const tasks = tasksByStatus[status];
+                    if (tasks.length > 0) {
+                        mytasksHtml += `
+                            <div class="mytasks-status-group">
+                                <div class="mytasks-status-header">
+                                    <h5>${status}</h5>
+                                    <span class="task-count">${tasks.length}</span>
+                                </div>
+                                <div class="mytasks-list">
+                                    ${tasks.map(task => this.renderMyTaskCard(task)).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                mytasksHtml += '</div>';
+                mytasksContent.innerHTML = mytasksHtml;
+            }
+            
+            renderTeam() {
+                const teamContent = document.getElementById('team-content');
+                
+                if (this.tasks.length === 0) {
+                    teamContent.innerHTML = '<div class="empty-team"><div class="empty-icon">👥</div><p>No tasks assigned to team members</p></div>';
+                    return;
+                }
+                
+                // Group by assignee
+                const tasksByAssignee = {};
+                this.tasks.forEach(task => {
+                    const assigneeName = task.assignee_name || 'Unassigned';
+                    if (!tasksByAssignee[assigneeName]) {
+                        tasksByAssignee[assigneeName] = [];
+                    }
+                    tasksByAssignee[assigneeName].push(task);
+                });
+                
+                let teamHtml = '<div class="team-groups">';
+                
+                Object.keys(tasksByAssignee).sort().forEach(assignee => {
+                    const tasks = tasksByAssignee[assignee];
+                    teamHtml += `
+                        <div class="team-assignee-group">
+                            <div class="team-assignee-header">
+                                <h5>👤 ${this.escapeHtml(assignee)}</h5>
+                                <span class="task-count">${tasks.length} task${tasks.length !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="team-tasks">
+                                ${tasks.map(task => this.renderTeamTask(task)).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                teamHtml += '</div>';
+                teamContent.innerHTML = teamHtml;
+            }
+            
+            renderCalendarTask(task) {
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
+                return `
+                    <div class="calendar-task ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
+                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                        <div class="calendar-task-title">${this.escapeHtml(task.title)}</div>
+                        <div class="calendar-task-meta">
+                            <span class="status-badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+                            ${task.assigned_by_username ? `<span class="assigned-by">by ${this.escapeHtml(task.assigned_by_username)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderMyTaskCard(task) {
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
+                return `
+                    <div class="mytask-card ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
+                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                        <div class="mytask-title">${this.escapeHtml(task.title)}</div>
+                        ${task.description ? `<div class="mytask-description">${this.escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
+                        <div class="mytask-meta">
+                            ${task.due_date ? `<span class="due-date ${isOverdue ? 'overdue' : ''}">📅 ${new Date(task.due_date).toLocaleDateString()}</span>` : ''}
+                            ${task.assigned_by_username ? `<span class="assigned-by">Created by ${this.escapeHtml(task.assigned_by_username)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderTeamTask(task) {
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
+                return `
+                    <div class="team-task ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
+                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                        <div class="team-task-header">
+                            <div class="team-task-title">${this.escapeHtml(task.title)}</div>
+                            <span class="status-badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+                        </div>
+                        ${task.due_date ? `<div class="team-task-due ${isOverdue ? 'overdue' : ''}">📅 Due: ${new Date(task.due_date).toLocaleDateString()}</div>` : ''}
+                    </div>
+                `;
             }
             
             renderTaskCard(task) {
@@ -920,77 +1366,192 @@ $mysqli->close();
             }
             
             bindTaskEvents() {
-                // Status change
-                document.querySelectorAll('.status-select').forEach(select => {
-                    select.addEventListener('change', (e) => {
+                // Remove existing event listeners to prevent memory leaks
+                this.removeTaskEventListeners();
+                
+                // Store event handlers for cleanup
+                this.taskEventHandlers = {
+                    statusChange: (e) => {
                         const taskId = e.target.getAttribute('data-task-id');
                         const newStatus = e.target.value;
                         this.updateTaskStatus(taskId, newStatus);
-                    });
-                });
-                
-                // Edit task
-                document.querySelectorAll('.edit-task-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    },
+                    editTask: (e) => {
                         const taskId = e.target.getAttribute('data-task-id');
                         this.showEditModal(taskId);
-                    });
-                });
-                
-                // Delete task
-                document.querySelectorAll('.delete-task-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    },
+                    deleteTask: (e) => {
                         const taskId = e.target.getAttribute('data-task-id');
                         this.deleteTask(taskId);
-                    });
-                });
-                
-                // Task title click - show detail modal
-                document.querySelectorAll('.task-title.clickable').forEach(title => {
-                    title.addEventListener('click', (e) => {
+                    },
+                    showDetail: (e) => {
                         const taskId = e.target.getAttribute('data-task-id');
                         this.showTaskDetailModal(taskId);
-                    });
-                });
-                
-                // Comment count button
-                document.querySelectorAll('.comment-count-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    },
+                    showComments: (e) => {
                         e.stopPropagation();
                         const taskId = e.currentTarget.getAttribute('data-task-id');
                         this.showTaskDetailModal(taskId);
-                    });
+                    }
+                };
+                
+                // Add event listeners with stored handlers
+                document.querySelectorAll('.status-select').forEach(select => {
+                    select.addEventListener('change', this.taskEventHandlers.statusChange);
                 });
                 
-                // Load comment counts
-                this.loadCommentCounts();
+                document.querySelectorAll('.edit-task-btn').forEach(btn => {
+                    btn.addEventListener('click', this.taskEventHandlers.editTask);
+                });
+                
+                document.querySelectorAll('.delete-task-btn').forEach(btn => {
+                    btn.addEventListener('click', this.taskEventHandlers.deleteTask);
+                });
+                
+                document.querySelectorAll('.task-title.clickable').forEach(title => {
+                    title.addEventListener('click', this.taskEventHandlers.showDetail);
+                });
+                
+                document.querySelectorAll('.comment-count-btn').forEach(btn => {
+                    btn.addEventListener('click', this.taskEventHandlers.showComments);
+                });
+                
+                // CS3-13G: Add click bindings for Calendar, My Tasks, and Team view task cards
+                document.querySelectorAll('.calendar-task').forEach(card => {
+                    card.addEventListener('click', this.taskEventHandlers.showDetail);
+                });
+                
+                document.querySelectorAll('.mytask-card').forEach(card => {
+                    card.addEventListener('click', this.taskEventHandlers.showDetail);
+                });
+                
+                document.querySelectorAll('.team-task').forEach(card => {
+                    card.addEventListener('click', this.taskEventHandlers.showDetail);
+                });
+                
+                // Load comment counts (throttled)
+                if (!this.commentCountsLoaded) {
+                    this.loadCommentCounts();
+                    this.commentCountsLoaded = true;
+                }
+            }
+            
+            removeTaskEventListeners() {
+                if (this.taskEventHandlers) {
+                    document.querySelectorAll('.status-select').forEach(select => {
+                        select.removeEventListener('change', this.taskEventHandlers.statusChange);
+                    });
+                    
+                    document.querySelectorAll('.edit-task-btn').forEach(btn => {
+                        btn.removeEventListener('click', this.taskEventHandlers.editTask);
+                    });
+                    
+                    document.querySelectorAll('.delete-task-btn').forEach(btn => {
+                        btn.removeEventListener('click', this.taskEventHandlers.deleteTask);
+                    });
+                    
+                    document.querySelectorAll('.task-title.clickable').forEach(title => {
+                        title.removeEventListener('click', this.taskEventHandlers.showDetail);
+                    });
+                    
+                    document.querySelectorAll('.comment-count-btn').forEach(btn => {
+                        btn.removeEventListener('click', this.taskEventHandlers.showComments);
+                    });
+                    
+                    // CS3-13G: Remove click bindings for Calendar, My Tasks, and Team view task cards
+                    document.querySelectorAll('.calendar-task').forEach(card => {
+                        card.removeEventListener('click', this.taskEventHandlers.showDetail);
+                    });
+                    
+                    document.querySelectorAll('.mytask-card').forEach(card => {
+                        card.removeEventListener('click', this.taskEventHandlers.showDetail);
+                    });
+                    
+                    document.querySelectorAll('.team-task').forEach(card => {
+                        card.removeEventListener('click', this.taskEventHandlers.showDetail);
+                    });
+                }
             }
             
             async updateTaskStatus(taskId, status) {
+                const task = this.tasks.find(t => t.task_id == taskId);
+                if (!task) {
+                    toastError('Task not found');
+                    return;
+                }
+                
+                const oldStatus = task.status;
+                if (oldStatus === status) {
+                    return; // No change needed
+                }
+                
+                // OPTIMISTIC UPDATE: Update UI immediately
+                this.updateTaskInArray(taskId, status);
+                
+                // Update dropdown if it exists (for list view)
+                const select = document.querySelector(`.status-select[data-task-id="${taskId}"]`);
+                if (select) {
+                    select.value = status;
+                }
+                
+                // Update views and metrics immediately (throttled)
+                this.scheduleViewUpdate();
+                
                 try {
-                    await api.put('api/tasks.php?action=status', {
-                        task_id: parseInt(taskId),
-                        status: status
-                    });
-                    
-                    // Update local task data
-                    const task = this.tasks.find(t => t.task_id == taskId);
-                    if (task) {
-                        task.status = status;
-                    }
-                    
+                    // Make backend call
+                    await this.updateTaskStatusBackend(taskId, status);
                     toastSuccess('Task status updated successfully');
                     
-                    // Reload page to update metrics
-                    setTimeout(() => window.location.reload(), 1000);
+                } catch (error) {
+                    // ROLLBACK on failure
+                    this.revertTaskInArray(taskId, oldStatus);
+                    
+                    // Revert dropdown
+                    if (select) {
+                        select.value = oldStatus;
+                    }
+                    
+                    // Re-render views to show reverted state (throttled)
+                    this.scheduleViewUpdate();
+                    
+                    toastError('Failed to update task status - changes reverted');
+                }
+            }
+            
+            async showEditModalFromDetail(taskId) {
+                try {
+                    // Load task details for editing
+                    const response = await api.get(`api/tasks.php?action=detail&task_id=${taskId}`);
+                    this.currentTask = response.task;
+                    
+                    // Hide detail modal instantly
+                    document.getElementById('task-detail-modal').style.display = 'none';
+                    
+                    // Prepare edit modal (don't reset overflow yet)
+                    document.getElementById('modal-title').textContent = 'Edit Task';
+                    document.getElementById('save-task-btn').textContent = 'Update Task';
+                    
+                    // Populate form
+                    document.getElementById('task-id').value = this.currentTask.task_id;
+                    document.getElementById('task-title').value = this.currentTask.title;
+                    document.getElementById('task-description').value = this.currentTask.description || '';
+                    document.getElementById('task-due-date').value = this.currentTask.due_date || '';
+                    document.getElementById('task-status').value = this.currentTask.status;
+                    
+                    // Set assignees
+                    document.querySelectorAll('input[name="assignees[]"]').forEach(checkbox => {
+                        checkbox.checked = this.currentTask.assignees.some(a => a.user_id == checkbox.value);
+                    });
+                    
+                    // Show edit modal immediately (seamless transition)
+                    document.getElementById('task-modal').style.display = 'flex';
+                    // Keep body overflow as 'hidden' for seamless transition
                     
                 } catch (error) {
-                    // Revert the select value
-                    const select = document.querySelector(`[data-task-id="${taskId}"]`);
-                    if (select) {
-                        const task = this.tasks.find(t => t.task_id == taskId);
-                        if (task) select.value = task.status;
-                    }
+                    console.error('Failed to load task details for editing:', error);
+                    // Fallback to normal edit modal
+                    document.body.style.overflow = 'auto';
+                    this.showEditModal(taskId);
                 }
             }
             
@@ -1081,6 +1642,25 @@ $mysqli->close();
                     assignees: assignees
                 };
                 
+                // Apply validation logic
+                const title = taskData.title ? taskData.title.trim() : '';
+                const dueDate = taskData.due_date;
+                
+                // Validate title
+                if (title === '' || title.length > 100) {
+                    showError('Title is required and must be under 100 characters.');
+                    return;
+                }
+                
+                // Validate due date
+                if (dueDate && !isValidDate(dueDate)) {
+                    showError('Please enter a valid due date.');
+                    return;
+                }
+                
+                // Update title with trimmed value
+                taskData.title = title;
+                
                 try {
                     if (this.currentTask) {
                         // Update existing task
@@ -1095,9 +1675,6 @@ $mysqli->close();
                     
                     this.hideModal();
                     this.loadTasks();
-                    
-                    // Reload page to update metrics
-                    setTimeout(() => window.location.reload(), 1000);
                     
                 } catch (error) {
                     console.error('Failed to save task:', error);
@@ -1126,62 +1703,59 @@ $mysqli->close();
                     }
                     
                     // Reload page to update metrics
-                    setTimeout(() => window.location.reload(), 1500);
                     
                 } catch (error) {
                     console.error('Failed to delete task:', error);
                 }
             }
             
-            filterTasks() {
-                const statusFilter = document.getElementById('status-filter').value;
-                const assigneeFilter = document.getElementById('assignee-filter').value;
-                const searchText = document.getElementById('search-tasks').value.toLowerCase();
+            async filterTasks() {
+                // CS3-13F: Server-side filtering with Juan's enhancements
+                try {
+                    const statusFilter = document.getElementById('status-filter').value;
+                    const assigneeFilter = document.getElementById('assignee-filter').value;
+                    const dueStartFilter = document.getElementById('due-start-filter').value;
+                    const dueEndFilter = document.getElementById('due-end-filter').value;
+                    const searchText = document.getElementById('search-tasks').value;
+                    
+                    // Build query parameters
+                    const params = new URLSearchParams({
+                        action: 'filter',
+                        project_id: this.projectId
+                    });
+                    
+                    if (statusFilter) params.append('status', statusFilter);
+                    if (assigneeFilter) params.append('assignee', assigneeFilter);
+                    if (dueStartFilter) params.append('due_start', dueStartFilter);
+                    if (dueEndFilter) params.append('due_end', dueEndFilter);
+                    if (searchText.trim()) params.append('search', searchText.trim());
+                    
+                    // Make API call for filtered results
+                    const url = `api/tasks.php?${params.toString()}`;
+                    const response = await api.get(url);
+                    
+                    // Update tasks array and re-render
+                    this.tasks = response.tasks || [];
+                    this.renderTasks();
+                    this.updateDashboardMetricsFromAllTasks();
+                    
+                } catch (error) {
+                    console.error('Failed to filter tasks:', error);
+                    // Fall back to showing all tasks
+                    this.loadTasks();
+                }
+            }
+            
+            clearFilters() {
+                // Reset all filters
+                document.getElementById('status-filter').value = '';
+                document.getElementById('assignee-filter').value = '';
+                document.getElementById('due-start-filter').value = '';
+                document.getElementById('due-end-filter').value = '';
+                document.getElementById('search-tasks').value = '';
                 
-                const taskCards = document.querySelectorAll('.task-card');
-                let visibleCount = 0;
-                
-                taskCards.forEach(card => {
-                    const taskId = card.getAttribute('data-task-id');
-                    const task = this.tasks.find(t => t.task_id == taskId);
-                    
-                    if (!task) return;
-                    
-                    let visible = true;
-                    
-                    // Status filter
-                    if (statusFilter && task.status !== statusFilter) {
-                        visible = false;
-                    }
-                    
-                    // Assignee filter
-                    if (assigneeFilter) {
-                        if (assigneeFilter === 'unassigned') {
-                            if (task.assignees && task.assignees.trim()) {
-                                visible = false;
-                            }
-                        } else {
-                            if (!task.assignees || !task.assignees.includes(`:${assigneeFilter}`)) {
-                                visible = false;
-                            }
-                        }
-                    }
-                    
-                    // Search filter
-                    if (searchText) {
-                        const searchableText = `${task.title} ${task.description || ''}`.toLowerCase();
-                        if (!searchableText.includes(searchText)) {
-                            visible = false;
-                        }
-                    }
-                    
-                    card.style.display = visible ? 'block' : 'none';
-                    if (visible) visibleCount++;
-                });
-                
-                // Show empty state if no tasks match filters
-                document.getElementById('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
-                document.getElementById('task-list').style.display = visibleCount === 0 ? 'none' : 'block';
+                // Reload all tasks
+                this.loadTasks();
             }
             
             showEmptyState() {
@@ -1193,6 +1767,527 @@ $mysqli->close();
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
+            }
+            
+            startAutoRefresh() {
+                // Disabled auto-refresh to prevent performance issues
+                // Users can manually refresh if needed
+                // TODO: Implement WebSocket or server-sent events for real-time updates
+            }
+            
+            switchView(view) {
+                this.currentView = view;
+                
+                // Update button states
+                const buttons = {
+                    list: document.getElementById('list-view-btn'),
+                    kanban: document.getElementById('kanban-view-btn'),
+                    calendar: document.getElementById('calendar-view-btn'),
+                    mytasks: document.getElementById('mytasks-view-btn'),
+                    team: document.getElementById('team-view-btn')
+                };
+                
+                const views = {
+                    list: document.getElementById('task-list-view'),
+                    kanban: document.getElementById('kanban-board'),
+                    calendar: document.getElementById('calendar-view'),
+                    mytasks: document.getElementById('mytasks-view'),
+                    team: document.getElementById('team-view')
+                };
+                
+                // Update button states
+                Object.keys(buttons).forEach(key => {
+                    if (buttons[key]) {
+                        buttons[key].classList.toggle('active', key === view);
+                    }
+                });
+                
+                // Show/hide appropriate view
+                Object.keys(views).forEach(key => {
+                    if (views[key]) {
+                        views[key].style.display = key === view ? 'block' : 'none';
+                    }
+                });
+                
+                // Load appropriate data and render
+                this.loadViewData(view);
+            }
+            
+            renderKanbanCard(task) {
+                const assignees = task.assignees ? task.assignees.split(',').map(a => {
+                    const [username, userId] = a.split(':');
+                    return { username, userId };
+                }).filter(a => a.username) : [];
+                
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
+                
+                return `
+                    <div class="kanban-task-card" draggable="true" data-task-id="${task.task_id}" data-status="${task.status}">
+                        <div class="kanban-task-header">
+                            <div class="kanban-task-title" data-task-id="${task.task_id}" style="cursor: pointer;">
+                                ${this.escapeHtml(task.title)}
+                            </div>
+                            <div class="kanban-task-actions">
+                                <button class="kanban-action-btn edit-kanban-task" data-task-id="${task.task_id}" 
+                                        data-tooltip="Edit task" title="Edit task">✏️</button>
+                                <button class="kanban-action-btn delete-kanban-task" data-task-id="${task.task_id}" 
+                                        data-tooltip="Delete task" title="Delete task">🗑️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="kanban-task-meta">
+                            <div class="kanban-task-assignees">
+                                ${assignees.length > 0 ? 
+                                    assignees.map(a => `<span class="kanban-assignee-badge">${this.escapeHtml(a.username)}</span>`).join('') :
+                                    '<span class="kanban-assignee-badge">Unassigned</span>'
+                                }
+                            </div>
+                            
+                            ${task.due_date ? `
+                                <div class="kanban-task-due ${isOverdue ? 'overdue' : ''}">
+                                    📅 ${new Date(task.due_date).toLocaleDateString()}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            setupDragAndDrop() {
+                // Remove existing drag event listeners
+                this.removeDragEventListeners();
+                
+                // Store drag event handlers for cleanup
+                if (!this.dragEventHandlers) {
+                    this.dragEventHandlers = {
+                        dragStart: this.handleDragStart.bind(this),
+                        dragEnd: this.handleDragEnd.bind(this),
+                        dragOver: this.handleDragOver.bind(this),
+                        drop: this.handleDrop.bind(this),
+                        dragEnter: this.handleDragEnter.bind(this),
+                        dragLeave: this.handleDragLeave.bind(this)
+                    };
+                }
+                
+                // Add drag event listeners to task cards
+                const cards = document.querySelectorAll('.kanban-task-card');
+                cards.forEach(card => {
+                    card.addEventListener('dragstart', this.dragEventHandlers.dragStart);
+                    card.addEventListener('dragend', this.dragEventHandlers.dragEnd);
+                });
+                
+                // Add drop event listeners to columns
+                const columns = document.querySelectorAll('.kanban-tasks');
+                columns.forEach(column => {
+                    column.addEventListener('dragover', this.dragEventHandlers.dragOver);
+                    column.addEventListener('drop', this.dragEventHandlers.drop);
+                    column.addEventListener('dragenter', this.dragEventHandlers.dragEnter);
+                    column.addEventListener('dragleave', this.dragEventHandlers.dragLeave);
+                });
+            }
+            
+            removeDragEventListeners() {
+                if (this.dragEventHandlers) {
+                    const cards = document.querySelectorAll('.kanban-task-card');
+                    cards.forEach(card => {
+                        card.removeEventListener('dragstart', this.dragEventHandlers.dragStart);
+                        card.removeEventListener('dragend', this.dragEventHandlers.dragEnd);
+                    });
+                    
+                    const columns = document.querySelectorAll('.kanban-tasks');
+                    columns.forEach(column => {
+                        column.removeEventListener('dragover', this.dragEventHandlers.dragOver);
+                        column.removeEventListener('drop', this.dragEventHandlers.drop);
+                        column.removeEventListener('dragenter', this.dragEventHandlers.dragEnter);
+                        column.removeEventListener('dragleave', this.dragEventHandlers.dragLeave);
+                    });
+                }
+            }
+            
+            handleDragStart(e) {
+                const card = e.target.closest('.kanban-task-card');
+                if (!card) return;
+                
+                card.classList.add('dragging');
+                // Use simple text format for better compatibility
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    taskId: card.dataset.taskId,
+                    currentStatus: card.dataset.status
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            
+            handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+            
+            handleDragOver(e) {
+                e.preventDefault();
+            }
+            
+            handleDragEnter(e) {
+                if (e.target.classList.contains('kanban-tasks')) {
+                    e.target.classList.add('drag-over');
+                }
+            }
+            
+            handleDragLeave(e) {
+                if (e.target.classList.contains('kanban-tasks')) {
+                    e.target.classList.remove('drag-over');
+                }
+            }
+            
+            async handleDrop(e) {
+                e.preventDefault();
+                
+                const dropZone = e.target.closest('.kanban-tasks');
+                if (!dropZone) {
+                    return;
+                }
+                
+                dropZone.classList.remove('drag-over');
+                
+                const column = dropZone.closest('.kanban-column');
+                const newStatus = column.dataset.status;
+                
+                try {
+                    const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    const taskId = dragData.taskId;
+                    const currentStatus = dragData.currentStatus;
+                    
+                    if (currentStatus === newStatus) {
+                        return; // No change needed
+                    }
+                    
+                    // OPTIMISTIC UPDATE: Move card immediately in UI
+                    const draggedCard = document.querySelector(`.kanban-task-card[data-task-id="${taskId}"]`);
+                    if (draggedCard) {
+                        // Store original position for potential rollback
+                        const originalColumn = draggedCard.closest('.kanban-tasks');
+                        const originalNextSibling = draggedCard.nextElementSibling;
+                        
+                        // Update local task data first
+                        const task = this.updateTaskInArray(taskId, newStatus);
+                        if (task) {
+                            const oldStatus = currentStatus;
+                            
+                            // Move card to new column
+                            dropZone.appendChild(draggedCard);
+                            draggedCard.dataset.status = newStatus;
+                            
+                            // Update counts and metrics immediately
+                            this.updateColumnCounts();
+                            
+                            try {
+                                // Make backend call
+                                await this.updateTaskStatusBackend(taskId, newStatus);
+                                toastSuccess('Task status updated successfully');
+                            } catch (error) {
+                                // ROLLBACK on failure
+                                this.revertTaskInArray(taskId, oldStatus);
+                                draggedCard.dataset.status = oldStatus;
+                                
+                                // Move card back to original position
+                                if (originalNextSibling) {
+                                    originalColumn.insertBefore(draggedCard, originalNextSibling);
+                                } else {
+                                    originalColumn.appendChild(draggedCard);
+                                }
+                                
+                                // Restore counts and metrics
+                                this.updateColumnCounts();
+                                
+                                toastError('Failed to update task status - changes reverted');
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    toastError('Failed to process task move');
+                }
+            }
+            
+            updateColumnCounts() {
+                // Update task counts for each column
+                const statuses = ['To Do', 'In Progress', 'Done'];
+                statuses.forEach(status => {
+                    const columnId = status === 'To Do' ? 'kanban-todo' : 
+                                   status === 'In Progress' ? 'kanban-progress' : 'kanban-done';
+                    const countId = status === 'To Do' ? 'todo-count' : 
+                                  status === 'In Progress' ? 'progress-count' : 'done-count';
+                    
+                    const column = document.getElementById(columnId);
+                    const countEl = document.getElementById(countId);
+                    
+                    if (column && countEl) {
+                        const taskCount = column.querySelectorAll('.kanban-task-card').length;
+                        countEl.textContent = taskCount;
+                    }
+                });
+                
+                // Update dashboard metrics
+                this.updateDashboardMetricsFromAllTasks();
+            }
+            
+            updateDashboardMetrics() {
+                // Throttle dashboard updates to prevent excessive DOM manipulation
+                if (this.dashboardUpdateTimeout) {
+                    clearTimeout(this.dashboardUpdateTimeout);
+                }
+                
+                this.dashboardUpdateTimeout = setTimeout(() => {
+                    this.performDashboardUpdate();
+                }, 100); // 100ms throttle
+            }
+            
+            async updateDashboardMetricsFromAllTasks() {
+                // Always fetch complete project tasks for dashboard metrics, ignoring current view/filters
+                try {
+                    const url = `api/tasks.php?action=project&project_id=${this.projectId}`;
+                    const response = await api.get(url);
+                    const allTasks = response.tasks || [];
+                    
+                    // Calculate metrics from all project tasks
+                    const metrics = this.calculateTaskMetricsFromArray(allTasks);
+                    
+                    // Update dashboard display
+                    this.updateDashboardDisplay(metrics);
+                    
+                } catch (error) {
+                    console.error('Failed to update dashboard metrics:', error);
+                }
+            }
+            
+            performDashboardUpdate() {
+                // Calculate metrics from current tasks array
+                const metrics = this.calculateTaskMetrics();
+                
+                // Update metric cards (batch DOM updates)
+                const elements = {
+                    total: document.getElementById('total-tasks-count'),
+                    completed: document.getElementById('completed-tasks-count'),
+                    inProgress: document.getElementById('in-progress-tasks-count'),
+                    todo: document.getElementById('todo-tasks-count'),
+                    percentage: document.getElementById('completion-percentage'),
+                    progressFill: document.getElementById('progress-fill'),
+                    progressDetails: document.getElementById('progress-details')
+                };
+                
+                // Batch DOM updates to reduce reflow
+                requestAnimationFrame(() => {
+                    if (elements.total) elements.total.textContent = metrics.total;
+                    if (elements.completed) elements.completed.textContent = metrics.completed;
+                    if (elements.inProgress) elements.inProgress.textContent = metrics.inProgress;
+                    if (elements.todo) elements.todo.textContent = metrics.todo;
+                    
+                    if (elements.percentage) elements.percentage.textContent = metrics.percentage + '%';
+                    if (elements.progressFill) {
+                        elements.progressFill.style.width = metrics.percentage + '%';
+                        elements.progressFill.classList.toggle('zero', metrics.percentage === 0);
+                    }
+                    if (elements.progressDetails) {
+                        if (metrics.total > 0) {
+                            elements.progressDetails.textContent = `${metrics.completed} of ${metrics.total} tasks completed`;
+                        } else {
+                            elements.progressDetails.textContent = 'No tasks created yet';
+                        }
+                    }
+                });
+            }
+            
+            scheduleViewUpdate() {
+                // Throttle view updates to prevent excessive rendering
+                if (this.viewUpdateTimeout) {
+                    clearTimeout(this.viewUpdateTimeout);
+                }
+                
+                this.viewUpdateTimeout = setTimeout(() => {
+                    if (this.currentView === 'kanban') {
+                        this.renderKanban();
+                    } else {
+                        this.updateDashboardMetricsFromAllTasks();
+                    }
+                }, 50); // 50ms throttle for view updates
+            }
+            
+            calculateTaskMetrics() {
+                const total = this.tasks.length;
+                const completed = this.tasks.filter(task => task.status === 'Done').length;
+                const inProgress = this.tasks.filter(task => task.status === 'In Progress').length;
+                const todo = this.tasks.filter(task => task.status === 'To Do').length;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                return {
+                    total,
+                    completed,
+                    inProgress,
+                    todo,
+                    percentage
+                };
+            }
+            
+            calculateTaskMetricsFromArray(tasks) {
+                const total = tasks.length;
+                const completed = tasks.filter(task => task.status === 'Done').length;
+                const inProgress = tasks.filter(task => task.status === 'In Progress').length;
+                const todo = tasks.filter(task => task.status === 'To Do').length;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                return {
+                    total,
+                    completed,
+                    inProgress,
+                    todo,
+                    percentage
+                };
+            }
+            
+            updateDashboardDisplay(metrics) {
+                // Update metric cards (batch DOM updates)
+                const elements = {
+                    total: document.getElementById('total-tasks-count'),
+                    completed: document.getElementById('completed-tasks-count'),
+                    inProgress: document.getElementById('in-progress-tasks-count'),
+                    todo: document.getElementById('todo-tasks-count'),
+                    percentage: document.getElementById('completion-percentage'),
+                    progressFill: document.getElementById('progress-fill'),
+                    progressDetails: document.getElementById('progress-details')
+                };
+                
+                // Batch DOM updates to reduce reflow
+                requestAnimationFrame(() => {
+                    if (elements.total) elements.total.textContent = metrics.total;
+                    if (elements.completed) elements.completed.textContent = metrics.completed;
+                    if (elements.inProgress) elements.inProgress.textContent = metrics.inProgress;
+                    if (elements.todo) elements.todo.textContent = metrics.todo;
+                    
+                    if (elements.percentage) elements.percentage.textContent = metrics.percentage + '%';
+                    
+                    if (elements.progressFill) {
+                        elements.progressFill.style.width = metrics.percentage + '%';
+                    }
+                    
+                    if (elements.progressDetails) {
+                        if (metrics.total === 0) {
+                            elements.progressDetails.textContent = 'No tasks yet';
+                        } else {
+                            elements.progressDetails.textContent = `${metrics.completed} of ${metrics.total} tasks completed`;
+                        }
+                    }
+                });
+            }
+            
+            async updateTaskStatusBackend(taskId, status) {
+                // Make the actual API call without UI updates
+                const response = await api.put('api/tasks.php?action=status', {
+                    task_id: parseInt(taskId),
+                    status: status
+                });
+                return response;
+            }
+            
+            updateTaskInArray(taskId, newStatus) {
+                // Update the task in the local tasks array
+                const task = this.tasks.find(t => t.task_id == taskId);
+                if (task) {
+                    task.status = newStatus;
+                }
+                return task;
+            }
+            
+            revertTaskInArray(taskId, oldStatus) {
+                // Revert the task status in the local tasks array
+                const task = this.tasks.find(t => t.task_id == taskId);
+                if (task) {
+                    task.status = oldStatus;
+                }
+                return task;
+            }
+            
+            bindKanbanEvents() {
+                // Click to view task details - now works on entire card
+                document.querySelectorAll('.kanban-task-card').forEach(card => {
+                    let isDragging = false;
+                    let dragStartTime = 0;
+                    let mouseDownTime = 0;
+                    
+                    // Handle mouse down - prepare for potential drag
+                    card.addEventListener('mousedown', (e) => {
+                        mouseDownTime = Date.now();
+                        // Add drag-ready class after a short delay if still holding
+                        setTimeout(() => {
+                            if (Date.now() - mouseDownTime > 150) {
+                                card.classList.add('drag-ready');
+                            }
+                        }, 150);
+                    });
+                    
+                    // Handle mouse up - remove drag-ready state
+                    card.addEventListener('mouseup', (e) => {
+                        card.classList.remove('drag-ready');
+                    });
+                    
+                    // Handle mouse leave - remove drag-ready state
+                    card.addEventListener('mouseleave', (e) => {
+                        card.classList.remove('drag-ready');
+                    });
+                    
+                    // Track drag start
+                    card.addEventListener('dragstart', (e) => {
+                        isDragging = true;
+                        dragStartTime = Date.now();
+                        card.classList.remove('drag-ready');
+                    });
+                    
+                    // Track drag end
+                    card.addEventListener('dragend', (e) => {
+                        card.classList.remove('drag-ready');
+                        // Reset dragging flag after a short delay to prevent click events
+                        setTimeout(() => {
+                            isDragging = false;
+                        }, 100);
+                    });
+                    
+                    // Handle clicks on entire card
+                    card.addEventListener('click', (e) => {
+                        // Don't open modal if we're dragging or just finished dragging
+                        if (isDragging || (Date.now() - dragStartTime) < 200) {
+                            return;
+                        }
+                        
+                        // Don't open modal if clicking action buttons
+                        if (e.target.matches('.kanban-action-btn, .edit-kanban-task, .delete-kanban-task')) {
+                            return;
+                        }
+                        
+                        // Don't open modal if this was a quick click (likely trying to drag)
+                        const clickDuration = Date.now() - mouseDownTime;
+                        if (clickDuration > 300) {
+                            return; // Was holding too long, probably trying to drag
+                        }
+                        
+                        const taskId = card.getAttribute('data-task-id');
+                        this.showTaskDetailModal(taskId);
+                    });
+                });
+                
+                // Kanban card edit buttons
+                document.querySelectorAll('.edit-kanban-task').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent triggering card click
+                        const taskId = e.target.getAttribute('data-task-id');
+                        this.showEditModal(taskId);
+                    });
+                });
+                
+                // Kanban card delete buttons
+                document.querySelectorAll('.delete-kanban-task').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent triggering card click
+                        const taskId = e.target.getAttribute('data-task-id');
+                        this.deleteTask(taskId);
+                    });
+                });
             }
             
             // Comment Management Methods - CS3-14C, CS3-14D
@@ -1225,6 +2320,9 @@ $mysqli->close();
                     // Load comments
                     this.loadComments(taskId);
                     
+                    // Bind modal action buttons
+                    this.bindModalActions(task);
+                    
                     // Show modal
                     document.getElementById('task-detail-modal').style.display = 'flex';
                     document.body.style.overflow = 'hidden';
@@ -1232,6 +2330,36 @@ $mysqli->close();
                 } catch (error) {
                     console.error('Failed to load task details:', error);
                     toastError('Failed to load task details');
+                }
+            }
+            
+            bindModalActions(task) {
+                // Remove existing event listeners
+                const editBtn = document.getElementById('edit-task-modal-btn');
+                const deleteBtn = document.getElementById('delete-task-modal-btn');
+                
+                if (editBtn) {
+                    // Clone and replace to remove old event listeners
+                    const newEditBtn = editBtn.cloneNode(true);
+                    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+                    
+                    newEditBtn.addEventListener('click', () => {
+                        // Seamless transition from detail modal to edit modal
+                        this.showEditModalFromDetail(task.task_id);
+                    });
+                }
+                
+                if (deleteBtn) {
+                    // Clone and replace to remove old event listeners
+                    const newDeleteBtn = deleteBtn.cloneNode(true);
+                    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                    
+                    newDeleteBtn.addEventListener('click', () => {
+                        // Hide detail modal first, then delete
+                        document.getElementById('task-detail-modal').style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                        this.deleteTask(task.task_id);
+                    });
                 }
             }
             
@@ -1614,19 +2742,10 @@ $mysqli->close();
             }
         };
         
-        // Initialize task manager
-        try {
-            window.taskManager = new TaskManager(<?php echo $project_id; ?>);
-        } catch (error) {
-            // TaskManager initialization failed - will use fallback
-        }
-        
-        
-        
-        // Separate initialization for task management to ensure it works
+        // Initialize task manager when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Backup initialization in case of timing issues
-            if (!window.taskManager && document.getElementById('create-task-btn')) {
+            // Initialize TaskManager
+            if (document.getElementById('create-task-btn')) {
                 window.taskManager = new TaskManager(<?php echo $project_id; ?>);
             }
             

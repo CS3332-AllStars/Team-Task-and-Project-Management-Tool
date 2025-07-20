@@ -42,7 +42,7 @@ try {
             
         case 'PUT':
         case 'PATCH':
-            handlePutRequest($task, $action);
+            handlePutRequest($task, $pdo, $action);
             break;
             
         case 'DELETE':
@@ -83,6 +83,91 @@ function handleGetRequest($task, $action) {
             }
             
             $tasks = $task->getByProject($projectId);
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+            
+        case 'filter':
+            // Get filtered tasks for a project (CS3-13F enhancement)
+            $projectId = $_GET['project_id'] ?? 0;
+            if (!$projectId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Project ID required']);
+                return;
+            }
+            
+            // Check project membership
+            if (!hasPermission($currentUser['user_id'], $projectId, 'view_tasks')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                return;
+            }
+            
+            // Build filters from query parameters
+            $filters = [];
+            if (!empty($_GET['status'])) $filters['status'] = $_GET['status'];
+            if (!empty($_GET['assignee'])) $filters['assignee'] = $_GET['assignee'];
+            if (!empty($_GET['due_start'])) $filters['due_start'] = $_GET['due_start'];
+            if (!empty($_GET['due_end'])) $filters['due_end'] = $_GET['due_end'];
+            if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
+            
+            $tasks = $task->getFilteredTasks($projectId, $filters);
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+            
+        case 'calendar':
+            // Get calendar view tasks (CS3-13G)
+            $projectId = $_GET['project_id'] ?? 0;
+            if (!$projectId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Project ID required']);
+                return;
+            }
+            
+            if (!hasPermission($currentUser['user_id'], $projectId, 'view_tasks')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                return;
+            }
+            
+            $tasks = $task->getCalendarTasks($projectId);
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+            
+        case 'mytasks':
+            // Get personal tasks view (CS3-13G)
+            $projectId = $_GET['project_id'] ?? 0;
+            if (!$projectId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Project ID required']);
+                return;
+            }
+            
+            if (!hasPermission($currentUser['user_id'], $projectId, 'view_tasks')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                return;
+            }
+            
+            $tasks = $task->getUserTasks($projectId, $currentUser['user_id']);
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+            
+        case 'team':
+            // Get team view tasks (CS3-13G)
+            $projectId = $_GET['project_id'] ?? 0;
+            if (!$projectId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Project ID required']);
+                return;
+            }
+            
+            if (!hasPermission($currentUser['user_id'], $projectId, 'view_tasks')) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                return;
+            }
+            
+            $tasks = $task->getTeamTasks($projectId);
             echo json_encode(['success' => true, 'tasks' => $tasks]);
             break;
             
@@ -260,18 +345,19 @@ function handlePostRequest($task, $project, $action) {
 /**
  * Handle PUT/PATCH requests (Update)
  */
-function handlePutRequest($task, $action) {
+function handlePutRequest($task, $pdo, $action) {
     global $currentUser;
     
     $input = json_decode(file_get_contents('php://input'), true);
     
     switch ($action) {
         case 'update':
-            // Update task details
+            // Update task details and assignees
             $taskId = $input['task_id'] ?? 0;
             $title = $input['title'] ?? null;
             $description = $input['description'] ?? null;
             $dueDate = $input['due_date'] ?? null;
+            $assignees = $input['assignees'] ?? null;
             
             if (!$taskId) {
                 http_response_code(400);
@@ -295,7 +381,25 @@ function handlePutRequest($task, $action) {
                 return;
             }
             
+            // Update basic task details
             $result = $task->update($taskId, $title, $description, $dueDate);
+            
+            // Update assignees if provided
+            if ($result['success'] && $assignees !== null) {
+                // Clear existing assignments
+                $clearSql = "DELETE FROM task_assignments WHERE task_id = ?";
+                $clearStmt = $pdo->prepare($clearSql);
+                $clearStmt->execute([$taskId]);
+                
+                // Add new assignments if any
+                if (!empty($assignees)) {
+                    $assignResult = $task->assignToUsers($taskId, $assignees);
+                    if (!$assignResult['success']) {
+                        $result['assignment_warning'] = $assignResult['message'];
+                    }
+                }
+            }
+            
             http_response_code($result['success'] ? 200 : 400);
             echo json_encode($result);
             break;
@@ -319,8 +423,8 @@ function handlePutRequest($task, $action) {
                 return;
             }
             
-            // Check permission to update status
-            if (!hasPermission($currentUser['user_id'], $taskData['project_id'], 'edit_task')) {
+            // Check permission to update status (any project member can update task status)
+            if (!isProjectMember($currentUser['user_id'], $taskData['project_id'])) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Access denied']);
                 return;

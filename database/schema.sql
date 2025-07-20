@@ -41,7 +41,11 @@ CREATE TABLE tasks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_by) REFERENCES users(user_id) ON DELETE SET NULL
+    FOREIGN KEY (assigned_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    -- CS3-13A: Database constraint for title length validation (contributed by Juan Ledet)
+    CONSTRAINT chk_title_length CHECK (CHAR_LENGTH(title) <= 100 AND CHAR_LENGTH(title) >= 1),
+    -- CS3-13F: Full-text search index for title and description (contributed by Juan Ledet)
+    FULLTEXT INDEX ft_title_description (title, description)
 );
 
 -- Comments table (Comment class)
@@ -72,6 +76,7 @@ CREATE TABLE project_memberships (
 
 -- Task Assignments table (many-to-many relationship between Users and Tasks)
 -- Supports FR-15: task assignment to one or more team members
+-- CS3-13B: Enhanced structure and validation contributed by Juan Ledet
 CREATE TABLE task_assignments (
     assignment_id INT AUTO_INCREMENT PRIMARY KEY,
     task_id INT NOT NULL,
@@ -110,3 +115,56 @@ CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 CREATE INDEX idx_notifications_type ON notifications(type);
+
+-- CS3-13C: Status transition triggers contributed by Juan Ledet
+-- Status Transition Enforcement
+DELIMITER $$
+
+CREATE TRIGGER trg_validate_task_status_update
+BEFORE UPDATE ON tasks
+FOR EACH ROW
+BEGIN
+    IF NEW.status = OLD.status THEN
+        -- No change, allow
+        LEAVE;
+    END IF;
+    
+    IF NOT (
+        (OLD.status = 'To Do' AND NEW.status IN ('In Progress', 'Done')) OR
+        (OLD.status = 'In Progress' AND NEW.status IN ('To Do', 'Done')) OR
+        (OLD.status = 'Done' AND NEW.status IN ('To Do', 'In Progress'))
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = CONCAT('Invalid status transition: ', OLD.status, ' → ', NEW.status);
+    END IF;
+END$$
+
+-- Trigger Notifications to Assigned Users on Status Change
+CREATE TRIGGER trg_task_status_notify
+AFTER UPDATE ON tasks
+FOR EACH ROW
+BEGIN
+    -- Only notify if status changed
+    IF NEW.status <> OLD.status THEN
+        -- Create notifications for assigned users
+        INSERT INTO notifications (
+            user_id,
+            type,
+            title,
+            message,
+            related_task_id,
+            related_project_id
+        )
+        SELECT
+            ta.user_id,
+            'task_updated',
+            CONCAT('Task Updated: ', NEW.title),
+            CONCAT('The task "', NEW.title, '" is now "', NEW.status, '"'),
+            NEW.task_id,
+            NEW.project_id
+        FROM task_assignments ta
+        WHERE ta.task_id = NEW.task_id;
+    END IF;
+END$$
+
+DELIMITER ;

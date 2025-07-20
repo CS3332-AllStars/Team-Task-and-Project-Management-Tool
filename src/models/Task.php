@@ -1,6 +1,9 @@
 <?php
 // CS3332 AllStars Team Task & Project Management System  
 // Task Model - Complete implementation for CS3-13B, CS3-13C, CS3-13D
+// CS3-13A validation logic contributed by Juan Ledet
+// CS3-13B project membership validation contributed by Juan Ledet
+// CS3-13C status transition enforcement contributed by Juan Ledet
 
 class Task {
     private $pdo;
@@ -11,24 +14,38 @@ class Task {
     
     /**
      * Create a new task
-     * CS3-95: Task Creation & Input Validation
+     * CS3-13A: Task Creation & Input Validation
      */
     public function create($projectId, $title, $description = '', $assignedBy = null, $dueDate = null) {
         try {
-            // Validation
-            if (empty(trim($title))) {
-                return ['success' => false, 'message' => 'Title is required'];
+            $errors = [];
+            
+            // Validate title
+            $title = trim($title);
+            if (empty($title) || strlen($title) > 100) {
+                $errors[] = "Task title must be between 1 and 100 characters.";
             }
             
-            if (strlen($title) > 100) {
-                return ['success' => false, 'message' => 'Title must be 100 characters or less'];
+            // Validate due date
+            if (!empty($dueDate) && !DateTime::createFromFormat('Y-m-d', $dueDate)) {
+                $errors[] = "Invalid due date format.";
+            }
+            
+            // Validate project ID
+            if (empty($projectId)) {
+                $errors[] = "Project ID is required.";
+            }
+            
+            // Return errors if validation fails
+            if (!empty($errors)) {
+                return ['success' => false, 'message' => implode(' ', $errors), 'errors' => $errors];
             }
             
             // Insert task
-            $sql = "INSERT INTO tasks (project_id, title, description, assigned_by, due_date) 
-                    VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO tasks (project_id, title, description, assigned_by, due_date, assigned_date) 
+                    VALUES (?, ?, ?, ?, ?, NOW())";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$projectId, trim($title), $description, $assignedBy, $dueDate]);
+            $stmt->execute([$projectId, $title, $description, $assignedBy, $dueDate]);
             
             $taskId = $this->pdo->lastInsertId();
             
@@ -83,7 +100,8 @@ class Task {
                     LEFT JOIN users ua ON ta.user_id = ua.user_id
                     WHERE t.project_id = ?
                     GROUP BY t.task_id
-                    ORDER BY t.created_at DESC";
+                    ORDER BY FIELD(t.status, 'To Do', 'In Progress', 'Done'), 
+                             t.updated_at DESC";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$projectId]);
             
@@ -115,11 +133,11 @@ class Task {
             // Validate status transitions
             $currentStatus = $currentTask['status'];
             if (!$this->isValidStatusTransition($currentStatus, $newStatus)) {
-                return ['success' => false, 'message' => 'Invalid status transition'];
+                return ['success' => false, 'message' => "Invalid status transition: {$currentStatus} → {$newStatus}"];
             }
             
-            // Update status
-            $sql = "UPDATE tasks SET status = ? WHERE task_id = ?";
+            // Update status and timestamp (Juan's improvement)
+            $sql = "UPDATE tasks SET status = ?, updated_at = NOW() WHERE task_id = ?";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$newStatus, $taskId]);
             
@@ -134,15 +152,20 @@ class Task {
      * Validate status transitions
      */
     private function isValidStatusTransition($currentStatus, $newStatus) {
-        // Allow any backward movement and logical forward progression
-        $transitions = [
-            'To Do' => ['To Do', 'In Progress', 'Done'],
-            'In Progress' => ['To Do', 'In Progress', 'Done'],
-            'Done' => ['To Do', 'In Progress', 'Done'] // Allow reopening
+        // No change is always allowed
+        if ($currentStatus === $newStatus) {
+            return true;
+        }
+        
+        // Permissive workflow transitions (based on Juan's structure)
+        $validTransitions = [
+            'To Do' => ['In Progress', 'Done'],
+            'In Progress' => ['To Do', 'Done'],
+            'Done' => ['To Do', 'In Progress'] // Allow reopening
         ];
         
-        return isset($transitions[$currentStatus]) && 
-               in_array($newStatus, $transitions[$currentStatus]);
+        return isset($validTransitions[$currentStatus]) && 
+               in_array($newStatus, $validTransitions[$currentStatus]);
     }
     
     /**
@@ -158,6 +181,18 @@ class Task {
             
             if ($checkStmt->fetch()) {
                 return ['success' => false, 'message' => 'User already assigned to this task'];
+            }
+            
+            // Validate user is part of project (Juan's validation logic)
+            $validateSql = "SELECT 1 
+                           FROM project_memberships pm
+                           JOIN tasks t ON t.project_id = pm.project_id
+                           WHERE pm.user_id = ? AND t.task_id = ?";
+            $validateStmt = $this->pdo->prepare($validateSql);
+            $validateStmt->execute([$userId, $taskId]);
+            
+            if (!$validateStmt->fetch()) {
+                return ['success' => false, 'message' => 'User is not a member of this project'];
             }
             
             // Create assignment
@@ -329,6 +364,75 @@ class Task {
     }
     
     /**
+     * Advanced task filtering with search, status, assignee, and date filters
+     * CS3-13F: Enhanced filtering contributed by Juan Ledet
+     */
+    public function getFilteredTasks($projectId, $filters = []) {
+        try {
+            $conditions = ['t.project_id = ?'];
+            $params = [$projectId];
+            
+            // Status filter
+            if (!empty($filters['status'])) {
+                $conditions[] = 't.status = ?';
+                $params[] = $filters['status'];
+            }
+            
+            // Assignee filter
+            if (!empty($filters['assignee'])) {
+                if ($filters['assignee'] === 'unassigned') {
+                    $conditions[] = 'NOT EXISTS (SELECT 1 FROM task_assignments WHERE task_id = t.task_id)';
+                } else {
+                    $conditions[] = 'EXISTS (SELECT 1 FROM task_assignments WHERE task_id = t.task_id AND user_id = ?)';
+                    $params[] = intval($filters['assignee']);
+                }
+            }
+            
+            // Due date range filter
+            if (!empty($filters['due_start'])) {
+                $conditions[] = 't.due_date >= ?';
+                $params[] = $filters['due_start'];
+            }
+            if (!empty($filters['due_end'])) {
+                $conditions[] = 't.due_date <= ?';
+                $params[] = $filters['due_end'];
+            }
+            
+            // Full-text search
+            $searchCondition = '';
+            if (!empty($filters['search'])) {
+                $searchCondition = 'AND MATCH(t.title, t.description) AGAINST(? IN NATURAL LANGUAGE MODE)';
+                $params[] = $filters['search'];
+            }
+            
+            $sql = "SELECT t.*, 
+                           u.username as assigned_by_username,
+                           GROUP_CONCAT(
+                               CONCAT(ua.username, ':', ua.user_id) 
+                               SEPARATOR ','
+                           ) as assignees
+                    FROM tasks t 
+                    LEFT JOIN users u ON t.assigned_by = u.user_id
+                    LEFT JOIN task_assignments ta ON t.task_id = ta.task_id
+                    LEFT JOIN users ua ON ta.user_id = ua.user_id
+                    WHERE " . implode(' AND ', $conditions) . "
+                    $searchCondition
+                    GROUP BY t.task_id
+                    ORDER BY FIELD(t.status, 'To Do', 'In Progress', 'Done'), 
+                             t.updated_at DESC
+                    LIMIT 100";
+                    
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+    
+    /**
      * Validate user can edit/delete task
      * CS3-98: Authorization check
      */
@@ -349,6 +453,89 @@ class Task {
         }
         
         return false;
+    }
+    
+    /**
+     * CS3-13G: Calendar View - Get tasks organized by due date
+     * Contributed by Juan Ledet
+     */
+    public function getCalendarTasks($projectId) {
+        try {
+            $sql = "SELECT t.task_id,
+                           t.title,
+                           t.due_date,
+                           t.status,
+                           t.description,
+                           u.username as assigned_by_username
+                    FROM tasks t 
+                    LEFT JOIN users u ON t.assigned_by = u.user_id
+                    WHERE t.project_id = ? AND t.due_date IS NOT NULL
+                    ORDER BY t.due_date ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$projectId]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * CS3-13G: Personal View - Get tasks assigned to specific user
+     * Contributed by Juan Ledet
+     */
+    public function getUserTasks($projectId, $userId) {
+        try {
+            $sql = "SELECT t.task_id,
+                           t.title,
+                           t.status,
+                           t.due_date,
+                           t.description,
+                           t.created_at,
+                           u.username as assigned_by_username
+                    FROM tasks t
+                    LEFT JOIN users u ON t.assigned_by = u.user_id
+                    JOIN task_assignments ta ON t.task_id = ta.task_id
+                    WHERE t.project_id = ? AND ta.user_id = ?
+                    ORDER BY t.due_date ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$projectId, $userId]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * CS3-13G: Team View - Get tasks grouped by assignee
+     * Contributed by Juan Ledet
+     */
+    public function getTeamTasks($projectId) {
+        try {
+            $sql = "SELECT u.user_id,
+                           u.name AS assignee_name,
+                           u.username,
+                           t.task_id,
+                           t.title,
+                           t.status,
+                           t.due_date,
+                           t.description
+                    FROM users u
+                    JOIN task_assignments ta ON u.user_id = ta.user_id
+                    JOIN tasks t ON t.task_id = ta.task_id
+                    WHERE t.project_id = ?
+                    ORDER BY u.name ASC, t.due_date ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$projectId]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            return [];
+        }
     }
 }
 ?>
