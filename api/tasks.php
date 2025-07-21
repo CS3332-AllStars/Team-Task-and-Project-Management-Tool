@@ -254,7 +254,7 @@ function handlePostRequest($task, $project, $action) {
             // Check permission to create tasks
             if (!hasPermission($currentUser['user_id'], $projectId, 'create_task')) {
                 http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                echo json_encode(['success' => false, 'message' => 'You are not authorized to create tasks in this project. Only project members with appropriate permissions can create tasks.']);
                 return;
             }
             
@@ -377,7 +377,7 @@ function handlePutRequest($task, $pdo, $action) {
             $userRole = getUserRole($currentUser['user_id'], $taskData['project_id']);
             if (!$task->canUserModify($taskId, $currentUser['user_id'], $userRole)) {
                 http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                echo json_encode(['success' => false, 'message' => 'You are not authorized to modify this task. Only task creators, assignees, or project managers can edit tasks.']);
                 return;
             }
             
@@ -470,7 +470,7 @@ function handleDeleteRequest($task, $action) {
             $userRole = getUserRole($currentUser['user_id'], $taskData['project_id']);
             if (!$task->canUserModify($taskId, $currentUser['user_id'], $userRole)) {
                 http_response_code(403);
-                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                echo json_encode(['success' => false, 'message' => 'You are not authorized to delete this task. Only task creators, assignees, or project managers can delete tasks.']);
                 return;
             }
             

@@ -124,6 +124,22 @@ class APIManager {
                     throw error;
                 }
             }
+            
+            // For 403 responses, try to parse JSON to get the specific authorization error
+            if (response.status === 403) {
+                try {
+                    const errorData = await response.json();
+                    const error = new Error(errorData.message || 'You are not authorized to perform this action');
+                    error.status = 403;
+                    error.data = errorData;
+                    throw error;
+                } catch (parseError) {
+                    const error = new Error('You are not authorized to perform this action');
+                    error.status = 403;
+                    throw error;
+                }
+            }
+            
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
@@ -169,6 +185,9 @@ class APIManager {
             setTimeout(() => {
                 window.location.href = 'login.php';
             }, 2000);
+        } else if (error.status === 403 || error.message.includes('HTTP 403') || error.message.includes('not authorized')) {
+            processedError = error; // Keep the original error message for 403s
+            processedError.type = 'authorization';
         } else if (error.message.includes('HTTP 40')) {
             processedError = new Error('Client error - please check your request');
             processedError.type = 'client';

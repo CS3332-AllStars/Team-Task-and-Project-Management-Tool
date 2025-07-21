@@ -1303,26 +1303,37 @@ $mysqli->close();
             }
             
             renderTaskCard(task) {
+                const currentUserId = <?php echo isset($currentUser['user_id']) ? json_encode($currentUser['user_id']) : 'null'; ?>;
+                const currentUserRole = '<?php echo $currentUser['role'] ?? 'user'; ?>';
+                
                 const assignees = task.assignees ? task.assignees.split(',').map(a => {
                     const [username, userId] = a.split(':');
                     return { username, userId };
                 }).filter(a => a.username) : [];
                 
+                // Check if user can modify this task
+                const isTaskCreator = task.assigned_by == currentUserId;
+                const isTaskAssignee = assignees.some(a => a.userId == currentUserId);
+                const isProjectManager = currentUserRole === 'manager' || currentUserRole === 'admin';
+                const canModifyTask = isTaskCreator || isTaskAssignee || isProjectManager;
+                
                 const statusClass = task.status.toLowerCase().replace(' ', '-');
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 
                 return `
-                    <div class="task-card ${statusClass}" data-task-id="${task.task_id}">
+                    <div class="task-card ${statusClass}" data-task-id="${task.task_id}" style="cursor: pointer;" data-tooltip="Click to view details and comments">
                         <div class="task-header">
-                            <h4 class="task-title clickable" data-task-id="${task.task_id}" data-tooltip="Click to view details and comments">
+                            <h4 class="task-title" data-task-id="${task.task_id}">
                                 ${this.escapeHtml(task.title)}
                             </h4>
-                            <div class="task-actions">
-                                <button class="btn-icon edit-task-btn" data-task-id="${task.task_id}" 
-                                        data-tooltip="Edit task">✏️</button>
-                                <button class="btn-icon delete-task-btn" data-task-id="${task.task_id}" 
-                                        data-tooltip="Delete task">🗑️</button>
-                            </div>
+                            ${canModifyTask ? `
+                                <div class="task-actions">
+                                    <button class="btn-icon edit-task-btn" data-task-id="${task.task_id}" 
+                                            data-tooltip="Edit task">✏️</button>
+                                    <button class="btn-icon delete-task-btn" data-task-id="${task.task_id}" 
+                                            data-tooltip="Delete task">🗑️</button>
+                                </div>
+                            ` : ''}
                         </div>
                         
                         ${task.description ? `<p class="task-description">${this.escapeHtml(task.description)}</p>` : ''}
@@ -1372,21 +1383,33 @@ $mysqli->close();
                 // Store event handlers for cleanup
                 this.taskEventHandlers = {
                     statusChange: (e) => {
+                        e.stopPropagation(); // Prevent triggering card click
                         const taskId = e.target.getAttribute('data-task-id');
                         const newStatus = e.target.value;
                         this.updateTaskStatus(taskId, newStatus);
                     },
                     editTask: (e) => {
+                        e.stopPropagation(); // Prevent triggering card click
                         const taskId = e.target.getAttribute('data-task-id');
                         this.showEditModal(taskId);
                     },
                     deleteTask: (e) => {
+                        e.stopPropagation(); // Prevent triggering card click
                         const taskId = e.target.getAttribute('data-task-id');
                         this.deleteTask(taskId);
                     },
                     showDetail: (e) => {
-                        const taskId = e.target.getAttribute('data-task-id');
-                        this.showTaskDetailModal(taskId);
+                        // Don't open modal if clicking on interactive elements
+                        if (e.target.matches('.status-select, .btn-icon, .edit-task-btn, .delete-task-btn') || 
+                            e.target.closest('.task-actions, .status-select')) {
+                            return;
+                        }
+                        
+                        const taskCard = e.target.closest('.task-card');
+                        const taskId = taskCard ? taskCard.getAttribute('data-task-id') : null;
+                        if (taskId) {
+                            this.showTaskDetailModal(taskId);
+                        }
                     },
                     showComments: (e) => {
                         e.stopPropagation();
@@ -1408,8 +1431,8 @@ $mysqli->close();
                     btn.addEventListener('click', this.taskEventHandlers.deleteTask);
                 });
                 
-                document.querySelectorAll('.task-title.clickable').forEach(title => {
-                    title.addEventListener('click', this.taskEventHandlers.showDetail);
+                document.querySelectorAll('.task-card').forEach(card => {
+                    card.addEventListener('click', this.taskEventHandlers.showDetail);
                 });
                 
                 document.querySelectorAll('.comment-count-btn').forEach(btn => {
@@ -1450,8 +1473,8 @@ $mysqli->close();
                         btn.removeEventListener('click', this.taskEventHandlers.deleteTask);
                     });
                     
-                    document.querySelectorAll('.task-title.clickable').forEach(title => {
-                        title.removeEventListener('click', this.taskEventHandlers.showDetail);
+                    document.querySelectorAll('.task-card').forEach(card => {
+                        card.removeEventListener('click', this.taskEventHandlers.showDetail);
                     });
                     
                     document.querySelectorAll('.comment-count-btn').forEach(btn => {
@@ -1677,7 +1700,10 @@ $mysqli->close();
                     this.loadTasks();
                     
                 } catch (error) {
-                    console.error('Failed to save task:', error);
+                    // Don't log authorization errors to console - they're expected behavior
+                    if (error.type !== 'authorization' && error.status !== 403) {
+                        console.error('Failed to save task:', error);
+                    }
                 }
             }
             
@@ -1705,7 +1731,10 @@ $mysqli->close();
                     // Reload page to update metrics
                     
                 } catch (error) {
-                    console.error('Failed to delete task:', error);
+                    // Don't log authorization errors to console - they're expected behavior
+                    if (error.type !== 'authorization' && error.status !== 403) {
+                        console.error('Failed to delete task:', error);
+                    }
                 }
             }
             
@@ -1814,10 +1843,19 @@ $mysqli->close();
             }
             
             renderKanbanCard(task) {
+                const currentUserId = <?php echo isset($currentUser['user_id']) ? json_encode($currentUser['user_id']) : 'null'; ?>;
+                const currentUserRole = '<?php echo $currentUser['role'] ?? 'user'; ?>';
+                
                 const assignees = task.assignees ? task.assignees.split(',').map(a => {
                     const [username, userId] = a.split(':');
                     return { username, userId };
                 }).filter(a => a.username) : [];
+                
+                // Check if user can modify this task
+                const isTaskCreator = task.assigned_by == currentUserId;
+                const isTaskAssignee = assignees.some(a => a.userId == currentUserId);
+                const isProjectManager = currentUserRole === 'manager' || currentUserRole === 'admin';
+                const canModifyTask = isTaskCreator || isTaskAssignee || isProjectManager;
                 
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 
@@ -1827,12 +1865,14 @@ $mysqli->close();
                             <div class="kanban-task-title" data-task-id="${task.task_id}" style="cursor: pointer;">
                                 ${this.escapeHtml(task.title)}
                             </div>
-                            <div class="kanban-task-actions">
-                                <button class="kanban-action-btn edit-kanban-task" data-task-id="${task.task_id}" 
-                                        data-tooltip="Edit task" title="Edit task">✏️</button>
-                                <button class="kanban-action-btn delete-kanban-task" data-task-id="${task.task_id}" 
-                                        data-tooltip="Delete task" title="Delete task">🗑️</button>
-                            </div>
+                            ${canModifyTask ? `
+                                <div class="kanban-task-actions">
+                                    <button class="kanban-action-btn edit-kanban-task" data-task-id="${task.task_id}" 
+                                            data-tooltip="Edit task" title="Edit task">✏️</button>
+                                    <button class="kanban-action-btn delete-kanban-task" data-task-id="${task.task_id}" 
+                                            data-tooltip="Delete task" title="Delete task">🗑️</button>
+                                </div>
+                            ` : ''}
                         </div>
                         
                         <div class="kanban-task-meta">
@@ -2334,32 +2374,52 @@ $mysqli->close();
             }
             
             bindModalActions(task) {
+                const currentUserId = <?php echo isset($currentUser['user_id']) ? json_encode($currentUser['user_id']) : 'null'; ?>;
+                const currentUserRole = '<?php echo $currentUser['role'] ?? 'user'; ?>';
+                
+                // Check if user can modify this task
+                const assignees = task.assignees || [];
+                const isTaskCreator = task.assigned_by == currentUserId;
+                const isTaskAssignee = assignees.some(a => a.user_id == currentUserId);
+                const isProjectManager = currentUserRole === 'manager' || currentUserRole === 'admin';
+                const canModifyTask = isTaskCreator || isTaskAssignee || isProjectManager;
+                
                 // Remove existing event listeners
                 const editBtn = document.getElementById('edit-task-modal-btn');
                 const deleteBtn = document.getElementById('delete-task-modal-btn');
                 
                 if (editBtn) {
-                    // Clone and replace to remove old event listeners
-                    const newEditBtn = editBtn.cloneNode(true);
-                    editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-                    
-                    newEditBtn.addEventListener('click', () => {
-                        // Seamless transition from detail modal to edit modal
-                        this.showEditModalFromDetail(task.task_id);
-                    });
+                    if (canModifyTask) {
+                        editBtn.style.display = 'inline-block';
+                        // Clone and replace to remove old event listeners
+                        const newEditBtn = editBtn.cloneNode(true);
+                        editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+                        
+                        newEditBtn.addEventListener('click', () => {
+                            // Seamless transition from detail modal to edit modal
+                            this.showEditModalFromDetail(task.task_id);
+                        });
+                    } else {
+                        editBtn.style.display = 'none';
+                    }
                 }
                 
                 if (deleteBtn) {
-                    // Clone and replace to remove old event listeners
-                    const newDeleteBtn = deleteBtn.cloneNode(true);
-                    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-                    
-                    newDeleteBtn.addEventListener('click', () => {
-                        // Hide detail modal first, then delete
-                        document.getElementById('task-detail-modal').style.display = 'none';
-                        document.body.style.overflow = 'auto';
-                        this.deleteTask(task.task_id);
-                    });
+                    if (canModifyTask) {
+                        deleteBtn.style.display = 'inline-block';
+                        // Clone and replace to remove old event listeners
+                        const newDeleteBtn = deleteBtn.cloneNode(true);
+                        deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                        
+                        newDeleteBtn.addEventListener('click', () => {
+                            // Hide detail modal first, then delete
+                            document.getElementById('task-detail-modal').style.display = 'none';
+                            document.body.style.overflow = 'auto';
+                            this.deleteTask(task.task_id);
+                        });
+                    } else {
+                        deleteBtn.style.display = 'none';
+                    }
                 }
             }
             
