@@ -194,12 +194,34 @@ $mysqli->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-id" content="<?php echo htmlspecialchars($currentUser['user_id']); ?>">
+    <meta name="user-role" content="<?php echo htmlspecialchars($user_role === 'admin' ? 'admin' : $currentUser['role']); ?>">
+    <meta name="project-role" content="<?php echo htmlspecialchars($user_role); ?>">
     <title><?php echo htmlspecialchars($project['title']); ?> - TTPM</title>
     <link rel="stylesheet" href="assets/css/project.css">
+    <link rel="stylesheet" href="assets/css/components.css">
 </head>
 <body>
     <div class="container">
-        <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
+        <!-- Navigation Bar for Role-Based UI Testing -->
+        <nav class="navbar">
+            <div class="navbar-nav">
+                <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
+                <!-- Admin toggle will be added here by RoleManager -->
+            </div>
+            <div class="navbar-user">
+                <div class="dropdown">
+                    <button class="btn dropdown-toggle" type="button" id="userDropdown">
+                        <?php echo htmlspecialchars($currentUser['username']); ?>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="profile.php">Profile</a>
+                        <a class="dropdown-item" href="logout.php">Logout</a>
+                        <!-- Admin panel link will be added here by RoleManager -->
+                    </div>
+                </div>
+            </div>
+        </nav>
         
         <?php if ($message): ?>
             <div class="message success"><?php echo htmlspecialchars($message); ?></div>
@@ -243,7 +265,8 @@ $mysqli->close();
                                 <?php echo ucfirst($member['role']); ?>
                             </span>
                             <?php if ($is_admin && $member['user_id'] != $_SESSION['user_id']): ?>
-                                <button type="button" class="btn btn-danger remove-member-btn" 
+                                <button type="button" class="btn btn-danger remove-member-btn admin-only" 
+                                        data-role-show="admin"
                                         data-user-id="<?php echo $member['user_id']; ?>"
                                         data-tooltip="Remove <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?> from project"
                                         data-tooltip-theme="error">Remove</button>
@@ -254,7 +277,7 @@ $mysqli->close();
             </ul>
 
             <?php if ($is_admin): ?>
-                <div class="add-member-form">
+                <div class="add-member-form admin-only">
                     <h4>Add New Member</h4>
                     <form id="add-member-form">
                         <div class="form-group small">
@@ -325,13 +348,22 @@ $mysqli->close();
         </div>
 
         <!-- Task Management Section - CS3-13B, CS3-13C, CS3-13D -->
-        <div class="section">
+        <div class="section member-only">
             <div class="section-header">
                 <h3>Task Management</h3>
-                <button id="create-task-btn" class="btn btn-success" 
+                <button id="create-task-btn" class="btn btn-success member-only" 
                         onclick="showTaskModal(); return false;"
                         data-tooltip="Create a new task for this project">
                     + Create Task
+                </button>
+                <!-- Admin-only controls for testing -->
+                <div style="position: relative; display: inline-block;">
+                    <button id="bulk-actions-btn" class="btn btn-warning admin-only" data-role-show="admin" data-tooltip="Admin-only bulk operations">
+                        🔧 Bulk Actions
+                    </button>
+                </div>
+                <button id="project-settings-btn" class="btn btn-info admin-only" data-role-show="admin" data-tooltip="Admin project settings">
+                    ⚙️ Project Settings
                 </button>
             </div>
             
@@ -467,7 +499,7 @@ $mysqli->close();
 
         <!-- Task Creation Modal -->
         <div id="task-modal" class="modal" style="display: none;">
-            <div class="modal-content">
+            <div class="modal-content member-only">
                 <div class="modal-header">
                     <h4 id="modal-title">Create New Task</h4>
                     <button type="button" class="close-modal" data-tooltip="Close modal">&times;</button>
@@ -530,13 +562,13 @@ $mysqli->close();
 
         <!-- Task Detail Modal with Comments - CS3-14C -->
         <div id="task-detail-modal" class="modal" style="display: none;">
-            <div class="modal-content large">
+            <div class="modal-content large member-only">
                 <div class="modal-header">
                     <h4 id="detail-modal-title">Task Details</h4>
                     <div class="modal-actions">
-                        <button type="button" id="edit-task-modal-btn" class="btn btn-secondary btn-small" 
+                        <button type="button" id="edit-task-modal-btn" class="btn btn-secondary btn-small member-only" 
                                 data-tooltip="Edit task">✏️ Edit</button>
-                        <button type="button" id="delete-task-modal-btn" class="btn btn-danger btn-small" 
+                        <button type="button" id="delete-task-modal-btn" class="btn btn-danger btn-small member-only" 
                                 data-tooltip="Delete task">🗑️ Delete</button>
                         <button type="button" class="close-modal" data-modal="task-detail-modal" data-tooltip="Close modal">&times;</button>
                     </div>
@@ -547,11 +579,11 @@ $mysqli->close();
                     </div>
                     
                     <!-- Comments Section -->
-                    <div class="comments-section">
+                    <div class="comments-section member-only">
                         <h5>Comments</h5>
                         
                         <!-- Comment Form -->
-                        <form id="comment-form" class="comment-form">
+                        <form id="comment-form" class="comment-form member-only">
                             <input type="hidden" id="comment-task-id" name="task_id">
                             <div class="form-group">
                                 <textarea id="comment-content" name="content" rows="3" 
@@ -580,7 +612,7 @@ $mysqli->close();
 
         <!-- Comment Edit Modal -->
         <div id="edit-comment-modal" class="modal" style="display: none;">
-            <div class="modal-content">
+            <div class="modal-content member-only">
                 <div class="modal-header">
                     <h4>Edit Comment</h4>
                     <button type="button" class="close-modal" data-modal="edit-comment-modal" data-tooltip="Close modal">&times;</button>
@@ -601,8 +633,71 @@ $mysqli->close();
             </div>
         </div>
 
+        <!-- Bulk Actions Sidebar -->
+        <div id="bulk-actions-dropdown" class="admin-only">
+            <div class="bulk-sidebar-header">
+                <h4 style="margin: 0 0 10px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                    🔧 <span>Bulk Actions</span>
+                </h4>
+                <div id="selected-count" style="font-size: 0.9em; color: #666; margin-bottom: 15px;">Click tasks to select them</div>
+            </div>
+            
+            <div class="bulk-selection-controls">
+                <h6 style="margin: 0 0 8px 0; color: #555; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Selection</h6>
+                <div style="display: flex; gap: 5px; margin-bottom: 20px;">
+                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllTasks()" style="flex: 1;">Select All</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearTaskSelection()" style="flex: 1;">Clear</button>
+                </div>
+            </div>
+            
+            <div class="bulk-actions-section">
+                <h6 style="margin: 0 0 8px 0; color: #555; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Actions</h6>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                    <button class="btn btn-sm btn-success" onclick="bulkUpdateStatus('Done')" style="text-align: left;">✓ Mark as Done</button>
+                    <button class="btn btn-sm btn-primary" onclick="bulkUpdateStatus('In Progress')" style="text-align: left;">⏳ Mark as In Progress</button>
+                    <button class="btn btn-sm btn-warning" onclick="bulkUpdateStatus('To Do')" style="text-align: left;">📋 Mark as To Do</button>
+                    <button class="btn btn-sm btn-danger" onclick="bulkDeleteTasks()" style="text-align: left;">🗑️ Delete Selected</button>
+                </div>
+            </div>
+            
+            <div class="bulk-exit-section" style="border-top: 1px solid #eee; padding-top: 15px;">
+                <button class="btn btn-sm btn-outline-dark" onclick="exitBulkMode()" style="width: 100%;">Exit Bulk Mode</button>
+            </div>
+        </div>
+
+        <!-- Project Settings Modal -->
+        <div id="project-settings-modal" class="modal" style="display: none;">
+            <div class="modal-content admin-only">
+                <div class="modal-header">
+                    <h4>⚙️ Project Settings</h4>
+                    <button type="button" class="close-modal" data-modal="project-settings-modal" data-tooltip="Close modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h5>Project Information</h5>
+                        <p><strong>Project ID:</strong> <?php echo $project_id; ?></p>
+                        <p><strong>Total Members:</strong> <?php echo count($members); ?></p>
+                        <p><strong>Your Role:</strong> <?php echo ucfirst($user_role); ?></p>
+                    </div>
+                    <div class="settings-section">
+                        <h5>Admin Actions</h5>
+                        <a href="edit-project.php?id=<?php echo $project_id; ?>" class="btn btn-primary">Edit Project Details</a>
+                        <button class="btn btn-warning" onclick="exportProjectData()">Export Project Data</button>
+                        <button class="btn btn-info" onclick="generateProjectReport()">Generate Report</button>
+                    </div>
+                    <div class="settings-section">
+                        <h5>Danger Zone</h5>
+                        <button class="btn btn-danger" onclick="archiveProject()">Archive Project</button>
+                        <p class="text-muted" style="font-size: 0.9rem; margin-top: 10px;">
+                            Note: Delete project functionality requires additional confirmation
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <?php if ($is_admin): ?>
-            <div class="section">
+            <div class="section admin-only">
                 <h3>Project Settings</h3>
                 <div class="add-member-form">
                     <p class="mb-2"><strong>Project Management Tools</strong></p>
@@ -794,6 +889,7 @@ $mysqli->close();
     
     <script src="assets/js/toast.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script src="assets/js/tooltips.js"></script>
     <script>
         
@@ -2817,7 +2913,293 @@ $mysqli->close();
                 });
                 createTaskBtn.setAttribute('data-listener-added', 'true');
             }
+
+            // Admin button event listeners
+            const bulkActionsBtn = document.getElementById('bulk-actions-btn');
+            if (bulkActionsBtn) {
+                bulkActionsBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleBulkActionsDropdown();
+                });
+            }
+
+            const projectSettingsBtn = document.getElementById('project-settings-btn');
+            if (projectSettingsBtn) {
+                projectSettingsBtn.addEventListener('click', function() {
+                    document.getElementById('project-settings-modal').style.display = 'flex';
+                });
+            }
         });
+
+        // Bulk Actions Functionality
+        let selectedTasks = new Set();
+        let bulkSelectionMode = false;
+        let originalTaskCardHandlers = new Map();
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('bulk-actions-dropdown');
+            const button = document.getElementById('bulk-actions-btn');
+            
+            if (dropdown && dropdown.classList.contains('show')) {
+                if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                    if (bulkSelectionMode) {
+                        exitBulkMode();
+                    }
+                }
+            }
+        });
+
+        function toggleBulkActionsDropdown() {
+            const dropdown = document.getElementById('bulk-actions-dropdown');
+            const isVisible = dropdown.classList.contains('show');
+            
+            if (isVisible) {
+                dropdown.classList.remove('show');
+                if (bulkSelectionMode) {
+                    exitBulkMode();
+                }
+            } else {
+                enableBulkSelectionMode();
+                positionSidebarToContent();
+                dropdown.classList.add('show');
+            }
+        }
+
+        function positionSidebarToContent() {
+            const container = document.querySelector('.container');
+            const sidebar = document.getElementById('bulk-actions-dropdown');
+            
+            if (container && sidebar) {
+                const containerRect = container.getBoundingClientRect();
+                
+                // Get responsive sidebar width
+                let sidebarWidth = 280;
+                if (window.innerWidth <= 1200) sidebarWidth = 260;
+                if (window.innerWidth <= 768) sidebarWidth = 240;
+                
+                // Position sidebar to the right of the content area
+                let leftPosition = containerRect.right + 10; // 10px gap
+                
+                // For smaller screens, if there's not enough space, position from right edge
+                const availableSpace = window.innerWidth - containerRect.right;
+                if (availableSpace < sidebarWidth + 30) {
+                    leftPosition = window.innerWidth - sidebarWidth - 15; // 15px from right edge
+                }
+                
+                sidebar.style.left = leftPosition + 'px';
+                
+                // Simple, safe top positioning - always visible
+                sidebar.style.top = '120px'; // Fixed position that's always safe
+            }
+        }
+
+        // Reposition sidebar on window resize
+        window.addEventListener('resize', function() {
+            if (bulkSelectionMode) {
+                positionSidebarToContent();
+            }
+        });
+
+        function enableBulkSelectionMode() {
+            bulkSelectionMode = true;
+            selectedTasks.clear();
+            
+            // Add visual indicator that we're in bulk selection mode
+            document.body.classList.add('bulk-selection-active');
+            
+            // Update all task cards for bulk selection
+            const taskCards = document.querySelectorAll('.task-card, .kanban-task-card');
+            taskCards.forEach(card => {
+                // Store and remove original click handler
+                if (card.onclick) {
+                    originalTaskCardHandlers.set(card, card.onclick);
+                    card.onclick = null;
+                }
+                
+                // Remove any existing click event listeners by cloning the element
+                const newCard = card.cloneNode(true);
+                card.parentNode.replaceChild(newCard, card);
+                
+                // Add bulk selection styles
+                newCard.classList.add('bulk-selectable');
+                newCard.style.cursor = 'pointer';
+                
+                // Add new click handler for selection - use capture to override everything
+                newCard.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    toggleTaskSelection(newCard);
+                }, true); // Use capture phase
+                
+                newCard.setAttribute('data-bulk-handler', 'true');
+                
+                // Store reference to new card for cleanup
+                originalTaskCardHandlers.set(newCard, originalTaskCardHandlers.get(card) || null);
+                originalTaskCardHandlers.delete(card);
+            });
+            
+            updateSelectedCount();
+        }
+
+        function toggleTaskSelection(card) {
+            const taskId = card.getAttribute('data-task-id');
+            
+            if (selectedTasks.has(taskId)) {
+                selectedTasks.delete(taskId);
+                card.classList.remove('bulk-selected');
+            } else {
+                selectedTasks.add(taskId);
+                card.classList.add('bulk-selected');
+            }
+            
+            updateSelectedCount();
+        }
+
+        function selectAllTasks() {
+            const taskCards = document.querySelectorAll('.task-card, .kanban-task-card');
+            taskCards.forEach(card => {
+                const taskId = card.getAttribute('data-task-id');
+                if (taskId) {
+                    selectedTasks.add(taskId);
+                    card.classList.add('bulk-selected');
+                }
+            });
+            updateSelectedCount();
+        }
+
+        function clearTaskSelection() {
+            selectedTasks.clear();
+            const selectedCards = document.querySelectorAll('.bulk-selected');
+            selectedCards.forEach(card => {
+                card.classList.remove('bulk-selected');
+            });
+            updateSelectedCount();
+        }
+
+        function exitBulkMode() {
+            bulkSelectionMode = false;
+            
+            // Hide dropdown
+            const dropdown = document.getElementById('bulk-actions-dropdown');
+            dropdown.classList.remove('show');
+            
+            // Remove bulk selection mode from body
+            document.body.classList.remove('bulk-selection-active');
+            
+            // Clear selections
+            clearTaskSelection();
+            
+            // Restore original functionality by reloading the task cards
+            if (window.taskManager && window.taskManager.loadTasks) {
+                window.taskManager.loadTasks();
+            } else {
+                // Fallback: reload the page if task manager isn't available
+                window.location.reload();
+            }
+            
+            // Clear the handlers map
+            originalTaskCardHandlers.clear();
+        }
+
+        function updateSelectedCount() {
+            const countElement = document.getElementById('selected-count');
+            if (countElement) {
+                if (selectedTasks.size === 0) {
+                    countElement.textContent = 'Click tasks to select them';
+                } else {
+                    countElement.textContent = `${selectedTasks.size} task${selectedTasks.size === 1 ? '' : 's'} selected`;
+                }
+            }
+        }
+
+        async function bulkUpdateStatus(newStatus) {
+            if (selectedTasks.size === 0) {
+                toastError('Please select at least one task');
+                return;
+            }
+
+            try {
+                const promises = Array.from(selectedTasks).map(taskId => 
+                    api.put('api/tasks.php?action=update_status', {
+                        task_id: parseInt(taskId),
+                        status: newStatus
+                    })
+                );
+
+                await Promise.all(promises);
+                toastSuccess(`${selectedTasks.size} task(s) updated to ${newStatus}`);
+                
+                // Refresh tasks and clear selection
+                if (window.taskManager) {
+                    window.taskManager.loadTasks();
+                }
+                clearTaskSelection();
+                exitBulkMode();
+            } catch (error) {
+                toastError('Failed to update some tasks');
+            }
+        }
+
+        async function bulkDeleteTasks() {
+            if (selectedTasks.size === 0) {
+                toastError('Please select at least one task');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${selectedTasks.size} selected task(s)? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const promises = Array.from(selectedTasks).map(taskId => 
+                    api.delete(`api/tasks.php?action=delete&task_id=${taskId}`)
+                );
+
+                await Promise.all(promises);
+                toastSuccess(`${selectedTasks.size} task(s) deleted successfully`);
+                
+                // Refresh tasks and clear selection
+                if (window.taskManager) {
+                    window.taskManager.loadTasks();
+                }
+                clearTaskSelection();
+                exitBulkMode();
+            } catch (error) {
+                toastError('Failed to delete some tasks');
+            }
+        }
+
+        // Project Settings Functionality
+        async function exportProjectData() {
+            try {
+                const response = await api.get(`api/projects.php?action=export&project_id=<?php echo $project_id; ?>`);
+                const dataStr = JSON.stringify(response, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `project_${<?php echo $project_id; ?>}_export.json`;
+                link.click();
+                
+                toastSuccess('Project data exported successfully');
+            } catch (error) {
+                toastError('Failed to export project data');
+            }
+        }
+
+        function generateProjectReport() {
+            toastInfo('Generating project report...');
+            window.open(`reports/project-report.php?project_id=<?php echo $project_id; ?>`, '_blank');
+        }
+
+        function archiveProject() {
+            if (confirm('Are you sure you want to archive this project? It will be hidden from the active projects list.')) {
+                toastInfo('Project archiving functionality coming soon');
+            }
+        }
     </script>
 </body>
 </html>

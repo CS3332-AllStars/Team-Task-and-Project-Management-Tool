@@ -75,8 +75,11 @@ $mysqli->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-id" content="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
+    <meta name="user-role" content="<?php echo htmlspecialchars($_SESSION['role'] ?? 'user'); ?>">
     <title>Simple Dashboard - TTPM</title>
     <link rel="stylesheet" href="assets/css/project.css">
+    <link rel="stylesheet" href="assets/css/components.css">
 </head>
 <body>
     <div class="container dashboard">
@@ -96,7 +99,10 @@ $mysqli->close();
         <div class="section">
             <div class="flex-between mb-2">
                 <h3 style="margin: 0;">Your Projects (<?php echo count($userProjects); ?>)</h3>
-                <a href="create-project.php" class="btn-create">+ Create New Project</a>
+                <div>
+                    <a href="create-project.php" class="btn-create member-only">+ Create New Project</a>
+                    <button class="btn-create admin-only" data-role-show="admin" style="background: #dc3545; margin-left: 10px;">🔧 Admin Tools</button>
+                </div>
             </div>
             
             <?php if (empty($userProjects)): ?>
@@ -170,15 +176,34 @@ $mysqli->close();
             <?php endif; ?>
         </div>
 
+        <!-- Admin-Only Section -->
+        <div class="section admin-only" data-role-show="admin">
+            <h3 style="color: #dc3545;">🔧 Admin Dashboard</h3>
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <h4>System Management</h4>
+                    <p>Manage users, projects, and system settings</p>
+                    <button class="btn-create" style="background: #28a745;">User Management</button>
+                    <button class="btn-create" style="background: #17a2b8; margin-left: 10px;">System Settings</button>
+                </div>
+            </div>
+        </div>
+
         <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
             <p>Simple Dashboard - Authentication Testing Complete</p>
         </div>
     </div>
     
     <script src="assets/js/toast.js"></script>
+    <script src="assets/js/auth.js"></script>
     <script>
-        // Welcome message for authenticated users
+        // Initialize role-based UI and welcome message
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize role-based UI
+            if (window.initRoleBasedUI) {
+                window.initRoleBasedUI('<?php echo $_SESSION['role'] ?? 'user'; ?>', <?php echo $_SESSION['user_id']; ?>);
+            }
+            
             // Only show welcome message on first load, not when returning from other pages
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('welcome') === '1') {
