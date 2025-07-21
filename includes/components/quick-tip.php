@@ -3,13 +3,38 @@
 // CS3-17E: Frontend Component Includes - Quick Tip/Help Component
 
 /**
- * Reusable Quick Tip Component for educational tooltips and help sections
+ * Process variable injection in strings using {{variable}} syntax
+ */
+if (!function_exists('injectVariables')) {
+    function injectVariables($content, $variables = []) {
+        if (empty($variables) || !is_string($content)) {
+            return $content;
+        }
+        
+        foreach ($variables as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $subKey => $subValue) {
+                    $placeholder = '{{' . $key . '.' . $subKey . '}}';
+                    $content = str_replace($placeholder, htmlspecialchars((string)$subValue), $content);
+                }
+            } else {
+                $placeholder = '{{' . $key . '}}';
+                $content = str_replace($placeholder, htmlspecialchars((string)$value), $content);
+            }
+        }
+        
+        return $content;
+    }
+}
+
+/**
+ * Reusable Quick Tip Component with Variable Injection
  * 
  * @param array $tip Tip data
  * @param array $options Display options
+ * @param array $variables Variables for injection
  */
-function renderQuickTip($tip, $options = []) {
-    // Default options
+function renderQuickTip($tip, $options = [], $variables = []) {
     $defaults = [
         'type' => 'tooltip', // 'tooltip', 'popover', 'inline', 'modal'
         'variant' => 'info', // 'info', 'warning', 'success', 'danger', 'light'
@@ -18,7 +43,9 @@ function renderQuickTip($tip, $options = []) {
         'showIcon' => true,
         'placement' => 'top', // For tooltips/popovers: 'top', 'bottom', 'left', 'right'
         'trigger' => 'hover', // 'hover', 'click', 'focus'
-        'autoShow' => false
+        'autoShow' => false,
+        'template' => null,
+        'customFields' => []
     ];
     $options = array_merge($defaults, $options);
     
@@ -52,6 +79,28 @@ function renderQuickTip($tip, $options = []) {
         'large' => 'tip-lg',
         default => ''
     };
+    
+    $injectionVars = array_merge([
+        'tip' => [
+            'title' => $title,
+            'content' => $content,
+            'category' => $category,
+            'icon' => $icon,
+            'id' => $id
+        ],
+        'variant' => $options['variant'],
+        'variant_class' => $variantClass,
+        'icon_class' => $iconClass,
+        'size_class' => $sizeClass,
+        'type' => $options['type'],
+        'placement' => $options['placement'],
+        'trigger' => $options['trigger']
+    ], $variables, $options['customFields']);
+    
+    // Use custom template if provided
+    if ($options['template']) {
+        return injectVariables($options['template'], $injectionVars);
+    }
     
     ob_start();
     
@@ -144,7 +193,9 @@ function renderQuickTip($tip, $options = []) {
             break;
     }
     
-    return ob_get_clean();
+    $output = ob_get_clean();
+    
+    return injectVariables($output, $injectionVars);
 }
 
 /**

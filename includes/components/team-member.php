@@ -3,13 +3,38 @@
 // CS3-17E: Frontend Component Includes - Team Member Component
 
 /**
- * Reusable Team Member Component
+ * Process variable injection in strings using {{variable}} syntax
+ */
+if (!function_exists('injectVariables')) {
+    function injectVariables($content, $variables = []) {
+        if (empty($variables) || !is_string($content)) {
+            return $content;
+        }
+        
+        foreach ($variables as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $subKey => $subValue) {
+                    $placeholder = '{{' . $key . '.' . $subKey . '}}';
+                    $content = str_replace($placeholder, htmlspecialchars((string)$subValue), $content);
+                }
+            } else {
+                $placeholder = '{{' . $key . '}}';
+                $content = str_replace($placeholder, htmlspecialchars((string)$value), $content);
+            }
+        }
+        
+        return $content;
+    }
+}
+
+/**
+ * Reusable Team Member Component with Variable Injection
  * 
  * @param array $member Member data
  * @param array $options Display options
+ * @param array $variables Variables for injection
  */
-function renderTeamMember($member, $options = []) {
-    // Default options
+function renderTeamMember($member, $options = [], $variables = []) {
     $defaults = [
         'size' => 'default', // 'small', 'default', 'large'
         'showRole' => true,
@@ -19,7 +44,9 @@ function renderTeamMember($member, $options = []) {
         'showAvatar' => true,
         'layout' => 'horizontal', // 'horizontal', 'vertical'
         'clickable' => false,
-        'href' => '#'
+        'href' => '#',
+        'template' => null,
+        'customFields' => []
     ];
     $options = array_merge($defaults, $options);
     
@@ -62,6 +89,29 @@ function renderTeamMember($member, $options = []) {
     $wrapperStart = $options['clickable'] ? '<a href="' . htmlspecialchars($options['href']) . '" class="text-decoration-none">' : '';
     $wrapperEnd = $options['clickable'] ? '</a>' : '';
     $hoverClass = $options['clickable'] ? 'member-card-clickable' : '';
+    
+    $injectionVars = array_merge([
+        'member' => [
+            'id' => $userId,
+            'username' => $username,
+            'full_name' => $fullName,
+            'email' => $email,
+            'role' => $role,
+            'avatar_url' => $avatarSrc,
+            'is_online' => $isOnline,
+            'join_date' => $joinDate ? date('M j, Y', strtotime($joinDate)) : '',
+            'last_active' => $lastActive ? timeAgo($lastActive) : ''
+        ],
+        'role_class' => $roleClass,
+        'layout' => $options['layout'],
+        'size' => $options['size'],
+        'online_indicator' => $onlineIndicator
+    ], $variables, $options['customFields']);
+    
+    // Use custom template if provided
+    if ($options['template']) {
+        return injectVariables($options['template'], $injectionVars);
+    }
     
     ob_start();
     ?>
@@ -153,7 +203,9 @@ function renderTeamMember($member, $options = []) {
     <?php echo $wrapperEnd; ?>
     
     <?php
-    return ob_get_clean();
+    $output = ob_get_clean();
+    
+    return injectVariables($output, $injectionVars);
 }
 
 /**

@@ -3,13 +3,39 @@
 // CS3-17E: Frontend Component Includes - Dashboard Statistics Component
 
 /**
- * Reusable Dashboard Statistics Card Component
+ * Process variable injection in strings using {{variable}} syntax
+ * (Shared utility function)
+ */
+if (!function_exists('injectVariables')) {
+    function injectVariables($content, $variables = []) {
+        if (empty($variables) || !is_string($content)) {
+            return $content;
+        }
+        
+        foreach ($variables as $key => $value) {
+            if (is_array($value)) {
+                foreach ($value as $subKey => $subValue) {
+                    $placeholder = '{{' . $key . '.' . $subKey . '}}';
+                    $content = str_replace($placeholder, htmlspecialchars((string)$subValue), $content);
+                }
+            } else {
+                $placeholder = '{{' . $key . '}}';
+                $content = str_replace($placeholder, htmlspecialchars((string)$value), $content);
+            }
+        }
+        
+        return $content;
+    }
+}
+
+/**
+ * Reusable Dashboard Statistics Card Component with Variable Injection
  * 
  * @param array $stat Statistics data
  * @param array $options Display options
+ * @param array $variables Variables for injection
  */
-function renderDashboardStat($stat, $options = []) {
-    // Default options
+function renderDashboardStat($stat, $options = [], $variables = []) {
     $defaults = [
         'size' => 'default', // 'small', 'default', 'large'
         'variant' => 'primary', // 'primary', 'success', 'warning', 'danger', 'info'
@@ -17,7 +43,9 @@ function renderDashboardStat($stat, $options = []) {
         'showTrend' => false,
         'animated' => false,
         'clickable' => false,
-        'href' => '#'
+        'href' => '#',
+        'template' => null,
+        'customFields' => []
     ];
     $options = array_merge($defaults, $options);
     
@@ -71,6 +99,30 @@ function renderDashboardStat($stat, $options = []) {
     $wrapperEnd = $options['clickable'] ? '</a>' : '';
     $hoverClass = $options['clickable'] ? 'stat-card-clickable' : '';
     
+    $injectionVars = array_merge([
+        'stat' => [
+            'title' => $title,
+            'value' => number_format($value),
+            'raw_value' => $value,
+            'subtitle' => $subtitle,
+            'description' => $description,
+            'icon' => $icon
+        ],
+        'variant' => $options['variant'],
+        'variant_class' => $variantClass,
+        'size_class' => $sizeClass,
+        'trend_class' => $trendClass,
+        'trend_icon' => $trendIcon,
+        'trend_value' => $trendValue,
+        'animated' => $options['animated'],
+        'clickable' => $options['clickable']
+    ], $variables, $options['customFields']);
+    
+    // Use custom template if provided
+    if ($options['template']) {
+        return injectVariables($options['template'], $injectionVars);
+    }
+    
     ob_start();
     ?>
     
@@ -115,18 +167,20 @@ function renderDashboardStat($stat, $options = []) {
     <?php echo $wrapperEnd; ?>
     
     <?php
-    return ob_get_clean();
+    $output = ob_get_clean();
+    
+    return injectVariables($output, $injectionVars);
 }
 
 /**
  * Render a simple numeric statistic
  */
-function renderSimpleStat($title, $value, $icon = 'bi-graph-up', $variant = 'primary') {
+function renderSimpleStat($title, $value, $icon = 'bi-graph-up', $variant = 'primary', $variables = []) {
     return renderDashboardStat([
         'title' => $title,
         'value' => $value,
         'icon' => $icon
-    ], ['variant' => $variant]);
+    ], ['variant' => $variant], $variables);
 }
 
 /**
@@ -183,5 +237,21 @@ function renderTrendStat($title, $currentValue, $previousValue, $icon = 'bi-grap
         'trend' => $trend,
         'trend_value' => $percentage . '%'
     ], ['showTrend' => true]);
+}
+
+/**
+ * Render dashboard stat with custom template
+ */
+function renderDashboardStatWithTemplate($stat, $template, $variables = [], $options = []) {
+    $options['template'] = $template;
+    return renderDashboardStat($stat, $options, $variables);
+}
+
+/**
+ * Render dashboard stat with custom fields
+ */
+function renderDashboardStatWithFields($stat, $customFields = [], $options = [], $variables = []) {
+    $options['customFields'] = $customFields;
+    return renderDashboardStat($stat, $options, $variables);
 }
 ?>

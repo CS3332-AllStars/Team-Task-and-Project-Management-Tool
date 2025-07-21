@@ -41,6 +41,12 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <?php if (isset($_SESSION['csrf_token'])): ?>
         <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
     <?php endif; ?>
+    
+    <!-- Role-Based UI Meta Tags -->
+    <?php if ($isLoggedIn): ?>
+        <meta name="user-id" content="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
+        <meta name="user-role" content="<?php echo htmlspecialchars($userRole); ?>">
+    <?php endif; ?>
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -62,9 +68,14 @@ $isLoggedIn = isset($_SESSION['user_id']);
                             <i class="bi bi-house"></i> Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item member-only">
                         <a class="nav-link" href="create-project.php">
                             <i class="bi bi-plus-circle"></i> New Project
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only" data-role-show="admin">
+                        <a class="nav-link" href="#admin-panel">
+                            <i class="bi bi-shield-check"></i> Admin Panel
                         </a>
                     </li>
                 </ul>
@@ -80,12 +91,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
                             <?php endif; ?>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
-                            <?php if ($userRole === 'admin'): ?>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-shield"></i> Admin Panel</a></li>
-                            <?php endif; ?>
+                            <li><a class="dropdown-item member-only" href="#"><i class="bi bi-person"></i> Profile</a></li>
+                            <li><a class="dropdown-item member-only" href="#"><i class="bi bi-gear"></i> Settings</a></li>
+                            <li class="admin-only" data-role-show="admin"><hr class="dropdown-divider"></li>
+                            <li class="admin-only" data-role-show="admin"><a class="dropdown-item" href="#"><i class="bi bi-shield"></i> Admin Panel</a></li>
+                            <li class="admin-only" data-role-show="admin"><a class="dropdown-item" href="#"><i class="bi bi-tools"></i> Site Management</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                         </ul>
@@ -94,6 +104,19 @@ $isLoggedIn = isset($_SESSION['user_id']);
             </div>
         </div>
     </nav>
+    <?php endif; ?>
+    
+    <!-- Role-Based JavaScript -->
+    <?php if ($isLoggedIn): ?>
+        <script src="assets/js/auth.js"></script>
+        <script>
+        // Initialize role-based UI when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.initRoleBasedUI) {
+                window.initRoleBasedUI('<?php echo $userRole; ?>', <?php echo $_SESSION['user_id']; ?>);
+            }
+        });
+        </script>
     <?php endif; ?>
     
     <!-- Main Content Container -->

@@ -3,13 +3,40 @@
 // CS3-17E: Frontend Component Includes - Task Card Component
 
 /**
- * Reusable Task Card Component
+ * Process variable injection in strings using {{variable}} syntax
+ * @param string $content Content with variables
+ * @param array $variables Variables to inject
+ * @return string Processed content
+ */
+function injectVariables($content, $variables = []) {
+    if (empty($variables) || !is_string($content)) {
+        return $content;
+    }
+    
+    foreach ($variables as $key => $value) {
+        // Handle nested arrays with dot notation
+        if (is_array($value)) {
+            foreach ($value as $subKey => $subValue) {
+                $placeholder = '{{' . $key . '.' . $subKey . '}}';
+                $content = str_replace($placeholder, htmlspecialchars((string)$subValue), $content);
+            }
+        } else {
+            $placeholder = '{{' . $key . '}}';
+            $content = str_replace($placeholder, htmlspecialchars((string)$value), $content);
+        }
+    }
+    
+    return $content;
+}
+
+/**
+ * Reusable Task Card Component with Variable Injection Support
  * 
  * @param array $task Task data
  * @param array $options Display options
+ * @param array $variables Variables for injection (optional)
  */
-function renderTaskCard($task, $options = []) {
-    // Default options
+function renderTaskCard($task, $options = [], $variables = []) {
     $defaults = [
         'showAssignees' => true,
         'showDueDate' => true,
@@ -17,7 +44,9 @@ function renderTaskCard($task, $options = []) {
         'showActions' => true,
         'clickable' => true,
         'cardClass' => '',
-        'size' => 'default' // 'small', 'default', 'large'
+        'size' => 'default', // 'small', 'default', 'large'
+        'template' => null, // Custom template string
+        'customFields' => [] // Additional custom fields
     ];
     $options = array_merge($defaults, $options);
     
@@ -80,6 +109,26 @@ function renderTaskCard($task, $options = []) {
     // Clickable attributes
     $clickableAttrs = $options['clickable'] ? 
         'data-task-id="' . $taskId . '" style="cursor: pointer;" data-tooltip="Click to view details"' : '';
+    
+    $injectionVars = array_merge([
+        'task' => [
+            'id' => $taskId,
+            'title' => $title,
+            'description' => $description,
+            'status' => $status,
+            'due_date' => $dueDate ? date('M j, Y', strtotime($dueDate)) : '',
+            'created_by' => $createdBy
+        ],
+        'assignees_count' => count($assigneeList),
+        'is_overdue' => $isOverdue,
+        'is_due_today' => $isDueToday,
+        'status_class' => $statusClass,
+        'due_date_class' => $dueDateClass
+    ], $variables, $options['customFields']);
+    
+    if ($options['template']) {
+        return injectVariables($options['template'], $injectionVars);
+    }
     
     ob_start();
     ?>
@@ -154,27 +203,45 @@ function renderTaskCard($task, $options = []) {
     </div>
     
     <?php
-    return ob_get_clean();
+    $output = ob_get_clean();
+    
+    return injectVariables($output, $injectionVars);
 }
 
 /**
  * Render a simplified task card for lists
  */
-function renderTaskCardSimple($task) {
+function renderTaskCardSimple($task, $variables = []) {
     return renderTaskCard($task, [
         'showDescription' => false,
         'showActions' => false,
         'size' => 'small'
-    ]);
+    ], $variables);
 }
 
 /**
  * Render a detailed task card for modals/detailed views
  */
-function renderTaskCardDetailed($task) {
+function renderTaskCardDetailed($task, $variables = []) {
     return renderTaskCard($task, [
         'size' => 'large',
         'clickable' => false
-    ]);
+    ], $variables);
+}
+
+/**
+ * Render task card with custom template
+ */
+function renderTaskCardWithTemplate($task, $template, $variables = [], $options = []) {
+    $options['template'] = $template;
+    return renderTaskCard($task, $options, $variables);
+}
+
+/**
+ * Render task card with custom fields
+ */
+function renderTaskCardWithFields($task, $customFields = [], $options = [], $variables = []) {
+    $options['customFields'] = $customFields;
+    return renderTaskCard($task, $options, $variables);
 }
 ?>
