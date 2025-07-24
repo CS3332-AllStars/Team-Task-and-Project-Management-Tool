@@ -124,18 +124,16 @@ CREATE TRIGGER trg_validate_task_status_update
 BEFORE UPDATE ON tasks
 FOR EACH ROW
 BEGIN
-    IF NEW.status = OLD.status THEN
-        -- No change, allow
-        LEAVE;
-    END IF;
-    
-    IF NOT (
-        (OLD.status = 'To Do' AND NEW.status IN ('In Progress', 'Done')) OR
-        (OLD.status = 'In Progress' AND NEW.status IN ('To Do', 'Done')) OR
-        (OLD.status = 'Done' AND NEW.status IN ('To Do', 'In Progress'))
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = CONCAT('Invalid status transition: ', OLD.status, ' → ', NEW.status);
+    -- Only validate if status actually changed
+    IF NEW.status <> OLD.status THEN
+        IF NOT (
+            (OLD.status = 'To Do' AND NEW.status IN ('In Progress', 'Done')) OR
+            (OLD.status = 'In Progress' AND NEW.status IN ('To Do', 'Done')) OR
+            (OLD.status = 'Done' AND NEW.status IN ('To Do', 'In Progress'))
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid status transition detected';
+        END IF;
     END IF;
 END$$
 
@@ -158,8 +156,8 @@ BEGIN
         SELECT
             ta.user_id,
             'task_updated',
-            CONCAT('Task Updated: ', NEW.title),
-            CONCAT('The task "', NEW.title, '" is now "', NEW.status, '"'),
+            'Task Updated',
+            'Task status has been updated',
             NEW.task_id,
             NEW.project_id
         FROM task_assignments ta
