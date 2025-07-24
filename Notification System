@@ -1,0 +1,634 @@
+--CS3-15A: Notifications Table & Schema Setup
+
+CREATE TABLE notifications (
+  notification_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id         INT NOT NULL,
+  actor_id        INT DEFAULT NULL,
+  task_id         INT DEFAULT NULL,
+  project_id      INT DEFAULT NULL,
+  type            ENUM('task_assigned', 'task_updated', 'comment_added') NOT NULL,
+  message         TEXT NOT NULL,
+  is_read         BOOLEAN DEFAULT FALSE,
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (actor_id) REFERENCES users(user_id) ON DELETE SET NULL,
+  FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE SET NULL,
+  FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE SET NULL
+);
+
+
+-- CS3-15B:Backend Notification Trigger Logic
+-- NotificationService.php
+
+<?php
+
+class NotificationService {
+
+private $pdo;
+
+private $logFile;
+
+public function __construct(PDO $pdo, $logFile = '/var/log/notifications.log') {
+
+$this->pdo = $pdo;
+
+$this->logFile = $logFile;
+
+}
+
+/**
+
+* Send a notification by inserting into DB.
+
+*
+
+* @param int $recipientID
+
+* @param string $type ENUM('task_assigned', 'task_updated', 'comment_added')
+
+* @param string $message
+
+* @param int|null $taskID
+
+* @param int|null $projectID
+
+* @param int|null $actorID
+
+* @return bool success
+
+*/
+
+public function notify($recipientID, $type, $message, $taskID = null, $projectID = null, $actorID = null) {
+
+try {
+
+$stmt = $this->pdo->prepare("
+
+INSERT INTO notifications
+
+(recipientID, actorID, taskID, projectID, type, message)
+
+VALUES
+
+(:recipientID, :actorID, :taskID, :projectID, :type, :message)
+
+");
+
+$stmt->execute([
+
+':recipientID' => $recipientID,
+
+':actorID' => $actorID,
+
+':taskID' => $taskID,
+
+':projectID' => $projectID,
+
+':type' => $type,
+
+':message' => $message
+
+]);
+
+$this->log("Notification created: recipientID={$recipientID}, type={$type}, taskID={$taskID}, projectID={$projectID}, actorID={$actorID}");
+
+return true;
+
+} catch (PDOException $e) {
+
+$this->log("Notification insert failed: " . $e->getMessage());
+
+return false;
+
+}
+
+}
+
+private function log($msg) {
+
+$date = date('Y-m-d H:i:s');
+
+error_log("[$date] $msg\n", 3, $this->logFile);
+
+}
+
+}
+
+-- Task Assignment Handler
+
+$notificationService = new NotificationService($pdo);
+
+function assignTask($taskID, $recipientID, $actorID, $projectID) {
+
+global $notificationService;
+
+// Logic to assign the task (not shown)...
+
+// Create notification
+
+$message = "You have been assigned a new task (#$taskID).";
+
+$notificationService->notify($recipientID, 'task_assigned', $message, $taskID, $projectID, $actorID);
+
+}
+
+-- Task Status Update Handler
+
+unction updateTaskStatus($taskID, $recipientID, $actorID, $projectID, $newStatus) {
+
+global $notificationService;
+
+// Logic to update the status (not shown)...
+
+// Notify user of status update
+
+$message = "Task #$taskID status changed to $newStatus.";
+
+$notificationService->notify($recipientID, 'task_updated', $message, $taskID, $projectID, $actorID);
+
+}
+
+-- Comment Creation Handler
+
+function addComment($taskID, $recipientID, $actorID, $projectID, $commentText) {
+
+global $notificationService;
+
+// Notify relevant user
+
+$message = "New comment added: "$commentText"";
+
+$notificationService->notify($recipientID, 'comment_added', $message, $taskID, $projectID, $actorID);
+
+}
+
+
+
+-- CS3-15C: Notification API Endpoints
+
+-- GET /api/notifications
+
+session_start();
+
+header('Content-Type: application/json');
+
+// CSRF validation assumed here
+
+if (!isset($_SESSION['userID'])) {
+
+http_response_code(401);
+
+echo json_encode(['error' => 'Unauthorized']);
+
+exit;
+
+}
+
+$userID = $_SESSION['userID'];
+
+$stmt = $pdo->prepare("
+
+SELECT notificationID, actorID, taskID, projectID, type, message, is_read, created_at
+
+FROM notifications
+
+WHERE recipientID = :userID
+
+ORDER BY created_at DESC
+
+");
+
+$stmt->execute([':userID' => $userID]);
+
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+echo json_encode(['notifications' => $notifications]);
+
+-- POST /api/notifications/read
+
+session_start();
+
+header('Content-Type: application/json');
+
+// CSRF token validation assumed
+
+if (!isset($_SESSION['userID'])) {
+
+http_response_code(401);
+
+echo json_encode(['error' => 'Unauthorized']);
+
+exit;
+
+}
+
+$data = json_decode(file_get_contents('php://input'), true);
+
+$notificationID = (int) ($data['notificationID'] ?? 0);
+
+$userID = $_SESSION['userID'];
+
+// Only allow marking notifications owned by the user
+
+$stmt = $pdo->prepare("
+
+UPDATE notifications
+
+SET is_read = TRUE
+
+WHERE notificationID = :notificationID AND recipientID = :userID
+
+");
+
+$stmt->execute([
+
+':notificationID' => $notificationID,
+
+':userID' => $userID
+
+]);
+
+if ($stmt->rowCount() === 1) {
+
+echo json_encode(['status' => 'success']);
+
+} else {
+
+http_response_code(403);
+
+echo json_encode(['error' => 'Not authorized or not found']);
+
+}
+
+-- DELETE /api/notifications/archive-old
+
+session_start();
+
+header('Content-Type: application/json');
+
+// CSRF and session checks
+
+if (!isset($_SESSION['userID'])) {
+
+http_response_code(401);
+
+echo json_encode(['error' => 'Unauthorized']);
+
+exit;
+
+}
+
+$userID = $_SESSION['userID'];
+
+$stmt = $pdo->prepare("
+
+DELETE FROM notifications
+
+WHERE recipientID = :userID
+
+AND is_read = TRUE
+
+AND created_at < NOW() - INTERVAL 30 DAY
+
+");
+
+$stmt->execute([':userID' => $userID]);
+
+echo json_encode([
+
+'status' => 'success',
+
+'deleted' => $stmt->rowCount()
+
+]);
+
+
+-- CS3-15D: Notification Badge & Dropdown UI
+
+-- header.php — HTML + Bootstrap Dropdown
+
+<!-- Bell Icon with Notification Count -->
+
+<li class="nav-item dropdown">
+
+  <a class="nav-link dropdown-toggle position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+
+    <i class="bi bi-bell"></i>
+
+    <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+
+      0
+
+    </span>
+
+  </a>
+
+  <!-- Dropdown List -->
+
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown" style="width: 300px;" id="notifList">
+
+    <li class="dropdown-header d-flex justify-content-between align-items-center">
+
+      Notifications
+
+      <button class="btn btn-sm btn-link text-decoration-none" id="markAllRead">Mark all as read</button>
+
+    </li>
+
+    <li><hr class="dropdown-divider"></li>
+
+    <div id="notifItems"></div>
+
+  </ul>
+
+</li>
+
+-- Load Badge + Dropdown
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  loadNotifications();
+
+  // Load notifications via AJAX
+
+  function loadNotifications() {
+
+    fetch('/api/notifications')
+
+      .then(res => res.json())
+
+      .then(data => {
+
+        const itemsContainer = document.getElementById('notifItems');
+
+        const badge = document.getElementById('notifBadge');
+
+        let unreadCount = 0;
+
+        itemsContainer.innerHTML = '';
+
+        data.notifications.forEach(n => {
+
+          if (!n.is_read) unreadCount++;
+
+          const url = n.taskID ? `/tasks/view.php?id=${n.taskID}` : 
+
+                      n.projectID ? `/projects/view.php?id=${n.projectID}` : '#';
+
+          const item = document.createElement('a');
+
+          item.href = url;
+
+          item.className = 'dropdown-item text-wrap' + (n.is_read ? '' : ' fw-bold');
+
+          item.innerText = n.message;
+
+          itemsContainer.appendChild(item);
+
+        });
+
+        badge.innerText = unreadCount;
+
+        badge.classList.toggle('d-none', unreadCount === 0);
+
+      });
+
+  }
+
+  // "Mark All as Read" button
+
+  document.getElementById('markAllRead').addEventListener('click', function () {
+
+    fetch('/api/notifications/mark-all-read.php', {
+
+      method: 'POST',
+
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.csrfToken }
+
+    }).then(() => loadNotifications());
+
+  });
+
+});
+
+</script>
+
+-- Backend Endpoint
+
+<?php
+
+session_start();
+
+header('Content-Type: application/json');
+
+// CSRF check assumed
+
+if (!isset($_SESSION['userID'])) {
+
+    http_response_code(401);
+
+    echo json_encode(['error' => 'Unauthorized']);
+
+    exit;
+
+}
+
+require_once '../../config/db.php'; // connect $pdo
+
+$userID = $_SESSION['userID'];
+
+$stmt = $pdo->prepare("
+
+  UPDATE notifications
+
+  SET is_read = TRUE
+
+  WHERE recipientID = :userID AND is_read = FALSE
+
+");
+
+$stmt->execute([':userID' => $userID]);
+
+echo json_encode(['status' => 'success', 'updated' => $stmt->rowCount()]);
+
+
+-- CS3-15E: UX Feedback Integration
+
+-- Task Assigned
+
+INSERT INTO notifications (recipientID, actorID, taskID, projectID, type, message)
+
+VALUES (
+
+@recipientID,        -- ID of the user the task is assigned to
+
+@actorID,            -- ID of the user assigning the task
+
+@taskID,             -- Related task
+
+@projectID,          -- Related project
+
+'task_assigned',
+
+CONCAT('Task assigned by ', (SELECT name FROM users WHERE userID = @actorID))
+
+);
+
+-- Comment Added
+
+INSERT INTO notifications (recipientID, actorID, taskID, projectID, type, message)
+
+SELECT
+
+t.assigneeID AS recipientID,
+
+@actorID,
+
+@taskID,
+
+t.projectID,
+
+'comment_added',
+
+CONCAT('New comment by ', (SELECT name FROM users WHERE userID = @actorID))
+
+FROM tasks t
+
+WHERE t.taskID = @taskID;
+
+-- Task Status Changed
+
+INSERT INTO notifications (recipientID, actorID, taskID, projectID, type, message)
+
+SELECT
+
+t.assigneeID,
+
+@actorID,
+
+@taskID,
+
+t.projectID,
+
+'task_updated',
+
+CONCAT('Status changed by ', (SELECT name FROM users WHERE userID = @actorID))
+
+FROM tasks t
+
+WHERE t.taskID = @taskID;
+
+-- SQL to Support Tooltip Text
+
+SELECT
+
+notificationID,
+
+message,
+
+created_at,
+
+CONCAT('Created ',
+
+CASE
+
+WHEN TIMESTAMPDIFF(SECOND, created_at, NOW()) < 60 THEN CONCAT(TIMESTAMPDIFF(SECOND, created_at, NOW()), ' seconds ago')
+
+WHEN TIMESTAMPDIFF(MINUTE, created_at, NOW()) < 60 THEN CONCAT(TIMESTAMPDIFF(MINUTE, created_at, NOW()), ' mins ago')
+
+WHEN TIMESTAMPDIFF(HOUR, created_at, NOW()) < 24 THEN CONCAT(TIMESTAMPDIFF(HOUR, created_at, NOW()), ' hours ago')
+
+ELSE CONCAT(TIMESTAMPDIFF(DAY, created_at, NOW()), ' days ago')
+
+END
+
+) AS tooltip_text
+
+FROM notifications
+
+WHERE recipientID = @currentUserID
+
+ORDER BY created_at DESC;
+
+-- Frontend (tooltips.js integration) display this tooltip_text when the user hovers over the timestamp:
+
+-- html
+
+<span class="notification-time" title="Created 5 mins ago">
+
+{{ formattedDate(notification.created_at) }}
+
+</span>
+
+
+
+
+-- CS3-15F: Cleanup & Performance Strategy
+
+
+-- Load Only Last 10–25 Notifications per Request
+
+-- Get the 25 most recent notifications for a user
+
+SELECT *
+
+FROM notifications
+
+WHERE recipientID = @userID
+
+ORDER BY created_at DESC
+
+LIMIT 25;
+
+-- Archive or Delete Notifications Older Than 30 Days
+
+-- Delete Old Notifications
+
+DELETE FROM notifications
+
+WHERE created_at < NOW() - INTERVAL 30 DAY;
+
+-- Archive Old Notifications
+
+CREATE TABLE archived_notifications LIKE notifications;
+
+-- Move old records
+
+-- Step 1 Insert into archive
+
+INSERT INTO archived_notifications
+
+SELECT * FROM notifications
+
+WHERE created_at < NOW() - INTERVAL 30 DAY;
+
+-- Step 2 Delete from main table
+
+DELETE FROM notifications
+
+WHERE created_at < NOW() - INTERVAL 30 DAY;
+
+-- Optimize Index
+
+CREATE INDEX idx_notifications_user_read_time
+
+ON notifications (recipientID, is_read, created_at DESC);
+
+SELECT *
+
+FROM notifications
+
+WHERE recipientID = @userID AND is_read = FALSE
+
+ORDER BY created_at DESC
+
+LIMIT 25;
+
+-- CRON Task (Documented Script)
+
+-- CRON runs daily at 2 AM
+
+0 2 * * * /usr/bin/mysql -u your_user -pyour_pass your_db_name -e "DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 30 DAY;"
