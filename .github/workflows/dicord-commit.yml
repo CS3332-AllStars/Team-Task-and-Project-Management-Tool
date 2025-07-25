@@ -19,7 +19,6 @@ jobs:
           CONTENT="**New Commit:**
           
           **$COMMIT_MESSAGE**
-          
           [View Commit]($COMMIT_URL)
           
           Committed by *$COMMIT_AUTHOR*"

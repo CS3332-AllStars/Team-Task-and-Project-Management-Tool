@@ -729,6 +729,8 @@ $mysqli->close();
     </div>
     
     <script>
+        // Make CSRF token available to JavaScript
+        window.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>';
         
         // Define showTaskModal function in its own script block
         function showTaskModal() {
