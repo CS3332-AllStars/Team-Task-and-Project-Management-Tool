@@ -265,6 +265,21 @@ $mysqli->close();
                                 <?php echo ucfirst($member['role']); ?>
                             </span>
                             <?php if ($is_admin && $member['user_id'] != $_SESSION['user_id']): ?>
+                                <?php if ($member['role'] === 'member'): ?>
+                                    <button type="button" class="btn btn-success promote-member-btn admin-only" 
+                                            data-role-show="admin"
+                                            data-user-id="<?php echo $member['user_id']; ?>"
+                                            data-tooltip="Promote <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?> to admin">
+                                        Promote
+                                    </button>
+                                <?php elseif ($member['role'] === 'admin'): ?>
+                                    <button type="button" class="btn btn-secondary demote-member-btn admin-only" 
+                                            data-role-show="admin"
+                                            data-user-id="<?php echo $member['user_id']; ?>"
+                                            data-tooltip="Demote <?php echo htmlspecialchars($member['name'] ?: $member['username']); ?> to member">
+                                        Demote
+                                    </button>
+                                <?php endif; ?>
                                 <button type="button" class="btn btn-danger remove-member-btn admin-only" 
                                         data-role-show="admin"
                                         data-user-id="<?php echo $member['user_id']; ?>"
@@ -702,9 +717,12 @@ $mysqli->close();
                 <div class="add-member-form">
                     <p class="mb-2"><strong>Project Management Tools</strong></p>
                     <a href="edit-project.php?id=<?php echo $project_id; ?>" class="btn btn-primary">Edit Project Details</a>
-                    <p class="mt-2 text-muted" style="font-size: 0.9rem;">
-                        Coming soon: Transfer ownership and delete project
-                    </p>
+                    
+                    <div class="mt-3">
+                        <p class="mb-2"><strong>Project Actions</strong></p>
+                        <button class="btn btn-warning" onclick="confirmArchiveProject()">Archive Project</button>
+                        <button class="btn btn-danger" onclick="confirmDeleteProject()">Delete Project</button>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>
@@ -3195,11 +3213,158 @@ $mysqli->close();
             window.open(`reports/project-report.php?project_id=<?php echo $project_id; ?>`, '_blank');
         }
 
-        function archiveProject() {
-            if (confirm('Are you sure you want to archive this project? It will be hidden from the active projects list.')) {
-                toastInfo('Project archiving functionality coming soon');
+        // CS3-12E: Team member role management functions
+        async function promoteMember(userId) {
+            try {
+                const response = await fetch('api/member-actions.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'promote_member',
+                        project_id: <?php echo $project_id; ?>,
+                        user_id: userId,
+                        csrf_token: window.csrfToken
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastSuccess(result.message);
+                    location.reload(); // Refresh to update UI
+                } else {
+                    toastError(result.message);
+                }
+            } catch (error) {
+                toastError('Failed to promote member');
             }
         }
+
+        async function demoteMember(userId) {
+            try {
+                const response = await fetch('api/member-actions.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'demote_member',
+                        project_id: <?php echo $project_id; ?>,
+                        user_id: userId,
+                        csrf_token: window.csrfToken
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastSuccess(result.message);
+                    location.reload(); // Refresh to update UI
+                } else {
+                    toastError(result.message);
+                }
+            } catch (error) {
+                toastError('Failed to demote member');
+            }
+        }
+
+        // CS3-12F: Project archive/delete functions
+        function confirmArchiveProject() {
+            if (confirm('Are you sure you want to archive this project? It will be hidden from the active projects list but can be restored later.')) {
+                archiveProject();
+            }
+        }
+
+        function confirmDeleteProject() {
+            const projectName = '<?php echo addslashes($project['title']); ?>';
+            if (confirm(`⚠️ WARNING: This action cannot be undone!\n\nAre you sure you want to permanently DELETE the project "${projectName}"?\n\nThis will remove:\n• All tasks and comments\n• All team memberships\n• All project data\n\nType "DELETE" to confirm this action.`)) {
+                const confirmation = prompt('Type "DELETE" to confirm project deletion:');
+                if (confirmation === 'DELETE') {
+                    deleteProject();
+                } else {
+                    toastError('Project deletion cancelled - confirmation text did not match');
+                }
+            }
+        }
+
+        async function archiveProject() {
+            try {
+                const response = await fetch('api/project-actions.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'archive_project',
+                        project_id: <?php echo $project_id; ?>,
+                        csrf_token: window.csrfToken
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastSuccess(result.message);
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.php';
+                    }, 2000);
+                } else {
+                    toastError(result.message);
+                }
+            } catch (error) {
+                toastError('Failed to archive project');
+            }
+        }
+
+        async function deleteProject() {
+            try {
+                const response = await fetch('api/project-actions.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'delete_project',
+                        project_id: <?php echo $project_id; ?>,
+                        csrf_token: window.csrfToken
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    toastSuccess(result.message);
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.php';
+                    }, 2000);
+                } else {
+                    toastError(result.message);
+                }
+            } catch (error) {
+                toastError('Failed to delete project');
+            }
+        }
+
+        // Event listeners for promote/demote buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            // Promote member buttons
+            document.querySelectorAll('.promote-member-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    promoteMember(userId);
+                });
+            });
+
+            // Demote member buttons
+            document.querySelectorAll('.demote-member-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    demoteMember(userId);
+                });
+            });
+        });
     </script>
 </body>
 </html>

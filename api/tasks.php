@@ -7,6 +7,7 @@ require_once '../includes/api-session-check.php';
 require_once '../src/config/database.php';
 require_once '../src/models/Task.php';
 require_once '../src/models/Project.php';
+require_once '../src/models/NotificationService.php';
 require_once '../includes/rbac-helpers.php';
 
 // Set current user from session
@@ -266,6 +267,13 @@ function handlePostRequest($task, $project, $action) {
                 $assignResult = $task->assignToUsers($result['task_id'], $assignees);
                 if (!$assignResult['success']) {
                     $result['assignment_warning'] = $assignResult['message'];
+                } else {
+                    // CS3-15: Send notifications to assigned users
+                    foreach ($assignees as $assigneeId) {
+                        if ($assigneeId != $currentUser['user_id']) {
+                            notifyTaskAssigned($GLOBALS['pdo'], $result['task_id'], $assigneeId, $currentUser['user_id'], $projectId);
+                        }
+                    }
                 }
             }
             
@@ -300,6 +308,16 @@ function handlePostRequest($task, $project, $action) {
             }
             
             $result = $task->assignToUsers($taskId, $userIds);
+            
+            // CS3-15: Send notifications to newly assigned users
+            if ($result['success']) {
+                foreach ($userIds as $assigneeId) {
+                    if ($assigneeId != $currentUser['user_id']) {
+                        notifyTaskAssigned($GLOBALS['pdo'], $taskId, $assigneeId, $currentUser['user_id'], $taskData['project_id']);
+                    }
+                }
+            }
+            
             http_response_code($result['success'] ? 200 : 400);
             echo json_encode($result);
             break;
@@ -431,6 +449,18 @@ function handlePutRequest($task, $pdo, $action) {
             }
             
             $result = $task->updateStatus($taskId, $status);
+            
+            // CS3-15: Send notifications about status updates
+            if ($result['success']) {
+                // Get task assignees to notify them
+                $assignedUsers = $task->getAssignedUsers($taskId);
+                foreach ($assignedUsers as $assignee) {
+                    if ($assignee['user_id'] != $currentUser['user_id']) {
+                        notifyTaskUpdated($GLOBALS['pdo'], $taskId, $assignee['user_id'], $currentUser['user_id'], $taskData['project_id'], $status);
+                    }
+                }
+            }
+            
             http_response_code($result['success'] ? 200 : 400);
             echo json_encode($result);
             break;

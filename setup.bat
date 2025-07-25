@@ -297,6 +297,15 @@ if exist "%HTDOCS_PATH%" (
     )
 )
 
+REM Run database migrations
+echo Running database migrations...
+php migrate.php >nul 2>&1
+if errorlevel 1 (
+    echo [WARNING] Migration runner not available yet - this is normal for initial setup
+) else (
+    echo [OK] Database migrations completed
+)
+
 echo.
 echo ============================================
 echo SETUP COMPLETE!

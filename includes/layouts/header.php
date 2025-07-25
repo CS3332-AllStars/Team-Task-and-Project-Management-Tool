@@ -81,6 +81,29 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 </ul>
                 
                 <ul class="navbar-nav">
+                    <!-- Notification Bell - CS3-15D -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                            <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                0
+                            </span>
+                        </a>
+                        <!-- Notification Dropdown -->
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown" style="width: 350px;" id="notifList">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>Notifications</span>
+                                <button class="btn btn-sm btn-link text-decoration-none p-0" id="markAllRead">Mark all as read</button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <div id="notifItems" style="max-height: 300px; overflow-y: auto;">
+                                <li class="dropdown-item-text text-muted text-center py-3">
+                                    <i class="bi bi-bell-slash"></i> No notifications
+                                </li>
+                            </div>
+                        </ul>
+                    </li>
+                    
                     <!-- User Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
@@ -109,6 +132,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <!-- Role-Based JavaScript -->
     <?php if ($isLoggedIn): ?>
         <script src="assets/js/auth.js"></script>
+        <script src="assets/js/notifications.js"></script>
         <script>
         // Initialize role-based UI when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {

@@ -7,6 +7,7 @@ require_once '../includes/api-session-check.php';
 require_once '../src/config/database.php';
 require_once '../src/models/Comment.php';
 require_once '../src/models/Task.php';
+require_once '../src/models/NotificationService.php';
 require_once '../includes/rbac-helpers.php';
 
 // Set current user from session
@@ -260,6 +261,21 @@ function handlePostRequest($comment, $task, $action) {
             
             // Create comment
             $result = $comment->create($taskId, $currentUser['user_id'], $sanitizedContent);
+            
+            // CS3-15: Send notifications about new comments
+            if ($result['success']) {
+                // Get task data to find project and assignees
+                $taskData = $task->getById($taskId);
+                if ($taskData) {
+                    // Get all assigned users for this task
+                    $assignedUsers = $task->getAssignedUsers($taskId);
+                    foreach ($assignedUsers as $assignee) {
+                        if ($assignee['user_id'] != $currentUser['user_id']) {
+                            notifyCommentAdded($GLOBALS['pdo'], $taskId, $assignee['user_id'], $currentUser['user_id'], $taskData['project_id'], $sanitizedContent);
+                        }
+                    }
+                }
+            }
             
             http_response_code($result['success'] ? 201 : 400);
             

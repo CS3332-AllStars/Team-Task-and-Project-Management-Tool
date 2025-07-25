@@ -23,6 +23,7 @@ CREATE TABLE projects (
     project_id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
     description TEXT,
+    is_archived BOOLEAN DEFAULT FALSE,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -93,13 +94,6 @@ CREATE TABLE notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     type ENUM('task_assigned', 'task_updated', 'task_completed', 'comment_added', 'project_invitation', 'deadline_reminder') NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    related_task_id INT NULL,
-    related_project_id INT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    read_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (related_task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
     FOREIGN KEY (related_project_id) REFERENCES projects(project_id) ON DELETE CASCADE
