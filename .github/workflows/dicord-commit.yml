@@ -18,5 +18,5 @@ jobs:
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"username\": \"GitHub Bot\", \
-                    \"content\": \"**New Commit:** \n\n[$COMMIT_MESSAGE]($COMMIT_URL)\n\n Commited by *$COMMIT_AUTHOR*\"}" \
+                    \"content\": \"**New Commit:** [$COMMIT_MESSAGE]($COMMIT_URL) Commited by *$COMMIT_AUTHOR*\"}" \
                $DISCORD_WEBHOOK
