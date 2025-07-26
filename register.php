@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if (!empty($errors)): ?>
             <div class="alert alert-error">
                 <strong>Please fix the following errors:</strong>
-                <ul style="margin: 8px 0 0 20px; padding: 0;">
+                <ul class="error-list">
                     <?php foreach ($errors as $error): ?>
                         <li><?php echo htmlspecialchars($error); ?></li>
                     <?php endforeach; ?>
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if (!empty($success)): ?>
             <div class="alert alert-success">
                 <?php echo htmlspecialchars($success); ?>
-                <br><a href="login.php" style="color: #155724; font-weight: bold;">Click here to login</a>
+                <br><a href="login.php" class="success-link">Click here to login</a>
             </div>
         <?php endif; ?>
         

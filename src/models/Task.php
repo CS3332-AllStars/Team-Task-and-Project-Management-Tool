@@ -210,6 +210,23 @@ class Task {
     /**
      * Assign task to multiple users
      */
+    /**
+     * Get assigned users for a task - CS3-15 Notification Support
+     */
+    public function getAssignedUsers($taskId) {
+        try {
+            $sql = "SELECT ta.user_id, u.username, u.name 
+                    FROM task_assignments ta 
+                    JOIN users u ON ta.user_id = u.user_id 
+                    WHERE ta.task_id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$taskId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
     public function assignToUsers($taskId, $userIds) {
         try {
             $this->pdo->beginTransaction();

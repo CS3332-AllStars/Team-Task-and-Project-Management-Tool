@@ -16,9 +16,28 @@ if ($mysqli->connect_error) {
     die("Connection failed: " . $mysqli->connect_error);
 }
 
+// Auto-migration check (CS3-12F migration system)
+require_once 'src/utils/AutoMigration.php';
+$pending_migrations = AutoMigration::hasPendingMigrations($mysqli);
+
 // Get user projects with comprehensive metrics for CS3-12B
 $userProjects = [];
 if (isset($_SESSION['user_id'])) {
+    // Check if is_archived column exists (CS3-12F migration check)
+    $column_check = $mysqli->query("
+        SELECT COUNT(*) as column_exists
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = 'ttpm_system' 
+        AND TABLE_NAME = 'projects' 
+        AND COLUMN_NAME = 'is_archived'
+    ");
+    $has_archived_column = $column_check->fetch_assoc()['column_exists'] > 0;
+
+    // Build query based on whether is_archived column exists
+    $where_clause = $has_archived_column 
+        ? "WHERE pm.user_id = ? AND (p.is_archived IS NULL OR p.is_archived = FALSE)"
+        : "WHERE pm.user_id = ?";
+
     $stmt = $mysqli->prepare("
         SELECT 
             p.project_id, 
@@ -32,7 +51,7 @@ if (isset($_SESSION['user_id'])) {
             p.created_date
         FROM projects p 
         JOIN project_memberships pm ON p.project_id = pm.project_id 
-        WHERE pm.user_id = ?
+        $where_clause
         ORDER BY pm.joined_at DESC
     ");
     $stmt->bind_param("i", $_SESSION['user_id']);
@@ -83,6 +102,10 @@ $mysqli->close();
 </head>
 <body>
     <div class="container dashboard">
+        <?php if ($pending_migrations): ?>
+            <?php AutoMigration::showMigrationBanner(); ?>
+        <?php endif; ?>
+        
         <div class="header center">
             <a href="logout.php" class="logout-link">Logout</a>
             <h1>Simple Dashboard</h1>
@@ -98,10 +121,11 @@ $mysqli->close();
 
         <div class="section">
             <div class="flex-between mb-2">
-                <h3 style="margin: 0;">Your Projects (<?php echo count($userProjects); ?>)</h3>
+                <h3 class="margin-0">Your Projects (<?php echo count($userProjects); ?>)</h3>
                 <div>
                     <a href="create-project.php" class="btn-create member-only">+ Create New Project</a>
-                    <button class="btn-create admin-only" data-role-show="admin" style="background: #dc3545; margin-left: 10px;">🔧 Admin Tools</button>
+                    <a href="archived-projects.php" class="btn-create member-only archived-btn">📦 Archived Projects</a>
+                    <button class="btn-create admin-only admin-button" data-role-show="admin">🔧 Admin Tools</button>
                 </div>
             </div>
             
@@ -178,18 +202,18 @@ $mysqli->close();
 
         <!-- Admin-Only Section -->
         <div class="section admin-only" data-role-show="admin">
-            <h3 style="color: #dc3545;">🔧 Admin Dashboard</h3>
+            <h3 class="admin-section-header">🔧 Admin Dashboard</h3>
             <div class="admin-stats">
                 <div class="stat-card">
                     <h4>System Management</h4>
                     <p>Manage users, projects, and system settings</p>
-                    <button class="btn-create" style="background: #28a745;">User Management</button>
-                    <button class="btn-create" style="background: #17a2b8; margin-left: 10px;">System Settings</button>
+                    <button class="btn-create success-button">User Management</button>
+                    <button class="btn-create info-button">System Settings</button>
                 </div>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
+        <div class="page-footer">
             <p>Simple Dashboard - Authentication Testing Complete</p>
         </div>
     </div>

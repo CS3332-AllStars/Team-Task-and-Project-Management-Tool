@@ -295,6 +295,15 @@ else
     [ -f data_error.log ] && rm data_error.log
 fi
 
+# Run database migrations
+echo \"Running database migrations...\"
+php migrate.php 2>/dev/null
+if [ $? -eq 0 ]; then
+    echo \"[OK] Database migrations completed\"
+else
+    echo \"[WARNING] Migration runner not available yet - this is normal for initial setup\"
+fi
+
 echo
 echo \"============================================\"
 echo \"SETUP COMPLETE!\"

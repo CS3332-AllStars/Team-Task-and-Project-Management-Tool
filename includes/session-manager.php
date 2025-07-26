@@ -12,6 +12,17 @@ function startSecureSession() {
     
     session_start();
     
+    // Check if session has expired BEFORE updating last_active
+    if (isset($_SESSION['last_active'])) {
+        $timeSinceActive = time() - $_SESSION['last_active'];
+        if ($timeSinceActive > 900) { // 15 minutes
+            // Session expired - destroy it
+            session_unset();
+            session_destroy();
+            session_start(); // Start fresh session
+        }
+    }
+    
     // Only regenerate session ID occasionally to prevent conflicts
     // Check if we need to regenerate (every 5 minutes or if not set)
     if (!isset($_SESSION['last_regenerate']) || (time() - $_SESSION['last_regenerate'] > 300)) {
@@ -19,7 +30,7 @@ function startSecureSession() {
         $_SESSION['last_regenerate'] = time();
     }
     
-    // Track session activity
+    // Update activity timestamp (only for valid/active sessions)
     $_SESSION['last_active'] = time();
     
     // Initialize CSRF token if not set
@@ -37,8 +48,11 @@ function checkSessionTimeout($timeout = 900) { // 15 minutes default
             return false;
         }
     }
-    $_SESSION['last_active'] = time();
     return true;
+}
+
+function updateSessionActivity() {
+    $_SESSION['last_active'] = time();
 }
 
 function destroySession() {
