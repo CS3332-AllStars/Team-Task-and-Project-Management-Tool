@@ -108,7 +108,7 @@ function renderTaskCard($task, $options = [], $variables = []) {
     
     // Clickable attributes
     $clickableAttrs = $options['clickable'] ? 
-        'data-task-id="' . $taskId . '" style="cursor: pointer;" data-tooltip="Click to view details"' : '';
+        'data-task-id="' . $taskId . '" class="cursor-pointer" data-tooltip="Click to view details"' : '';
     
     $injectionVars = array_merge([
         'task' => [

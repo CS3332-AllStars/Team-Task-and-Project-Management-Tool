@@ -5,9 +5,9 @@ class TooltipManager {
     constructor() {
         this.tooltips = new Map();
         this.activeTooltip = null;
-        this.showDelay = 500; // 500ms delay before showing
-        this.hideDelay = 100; // 100ms delay before hiding
-        this.offset = 8; // Distance from target element
+        this.showDelay = 400; // 400ms delay before showing
+        this.hideDelay = 150; // 150ms delay before hiding
+        this.offset = 12; // Distance from target element
         this.init();
     }
 
@@ -291,6 +291,16 @@ class TooltipManager {
         tooltip.className = `tooltip tooltip-${config.theme} tooltip-${config.position}`;
         tooltip.setAttribute('role', 'tooltip');
         tooltip.setAttribute('aria-live', 'polite');
+        
+        // Determine if this should be multiline based on content length and characters
+        const isLongText = config.content.length > 50 || 
+                          config.content.includes('\n') || 
+                          config.content.includes('•') ||
+                          config.content.split(' ').length > 8;
+        
+        if (isLongText) {
+            tooltip.classList.add('tooltip-multiline');
+        }
         
         // Create tooltip content
         const content = document.createElement('div');

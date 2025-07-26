@@ -234,7 +234,7 @@ $mysqli->close();
         <div class="header">
             <div>
                 <h1 class="project-title"><?php echo htmlspecialchars($project['title']); ?></h1>
-                <p class="text-muted" style="margin: 5px 0 0 0;">
+                <p class="text-muted margin-5-0">
                     <?php echo htmlspecialchars($project['description'] ?? 'No description provided'); ?>
                 </p>
             </div>
@@ -372,7 +372,7 @@ $mysqli->close();
                     + Create Task
                 </button>
                 <!-- Admin-only controls for testing -->
-                <div style="position: relative; display: inline-block;">
+                <div class="position-relative inline-block">
                     <button id="bulk-actions-btn" class="btn btn-warning admin-only" data-role-show="admin" data-tooltip="Admin-only bulk operations">
                         🔧 Bulk Actions
                     </button>
@@ -437,7 +437,7 @@ $mysqli->close();
                 </div>
                 
                 <!-- Empty State -->
-                <div id="empty-state" class="empty-state" style="display: none;">
+                <div id="empty-state" class="empty-state hidden">
                     <div class="empty-icon">📋</div>
                     <h4>No tasks yet</h4>
                     <p>Create your first task to get started with project management.</p>
@@ -446,7 +446,7 @@ $mysqli->close();
             </div>
             
             <!-- Kanban Board View -->
-            <div id="kanban-board" class="kanban-board" style="display: none;">
+            <div id="kanban-board" class="kanban-board hidden">
                 <div class="kanban-column" data-status="To Do">
                     <div class="kanban-header">
                         <h4>📝 To Do</h4>
@@ -479,7 +479,7 @@ $mysqli->close();
             </div>
             
             <!-- Calendar View - CS3-13G -->
-            <div id="calendar-view" class="calendar-view" style="display: none;">
+            <div id="calendar-view" class="calendar-view hidden">
                 <div class="calendar-header">
                     <h4>📅 Calendar View</h4>
                     <p class="text-muted">Tasks organized by due date</p>
@@ -490,7 +490,7 @@ $mysqli->close();
             </div>
             
             <!-- My Tasks View - CS3-13G -->
-            <div id="mytasks-view" class="mytasks-view" style="display: none;">
+            <div id="mytasks-view" class="mytasks-view hidden">
                 <div class="mytasks-header">
                     <h4>👤 My Tasks</h4>
                     <p class="text-muted">Tasks assigned to you</p>
@@ -501,7 +501,7 @@ $mysqli->close();
             </div>
             
             <!-- Team View - CS3-13G -->
-            <div id="team-view" class="team-view" style="display: none;">
+            <div id="team-view" class="team-view hidden">
                 <div class="team-header">
                     <h4>👥 Team View</h4>
                     <p class="text-muted">Tasks grouped by team member</p>
@@ -513,7 +513,7 @@ $mysqli->close();
         </div>
 
         <!-- Task Creation Modal -->
-        <div id="task-modal" class="modal" style="display: none;">
+        <div id="task-modal" class="modal hidden">
             <div class="modal-content member-only">
                 <div class="modal-header">
                     <h4 id="modal-title">Create New Task</h4>
@@ -576,7 +576,7 @@ $mysqli->close();
         </div>
 
         <!-- Task Detail Modal with Comments - CS3-14C -->
-        <div id="task-detail-modal" class="modal" style="display: none;">
+        <div id="task-detail-modal" class="modal hidden">
             <div class="modal-content large member-only">
                 <div class="modal-header">
                     <h4 id="detail-modal-title">Task Details</h4>
@@ -616,7 +616,7 @@ $mysqli->close();
                         </div>
                         
                         <!-- Empty Comments State -->
-                        <div id="empty-comments" class="empty-comments" style="display: none;">
+                        <div id="empty-comments" class="empty-comments hidden">
                             <div class="empty-icon">💬</div>
                             <p>No comments yet. Start the conversation!</p>
                         </div>
@@ -626,7 +626,7 @@ $mysqli->close();
         </div>
 
         <!-- Comment Edit Modal -->
-        <div id="edit-comment-modal" class="modal" style="display: none;">
+        <div id="edit-comment-modal" class="modal hidden">
             <div class="modal-content member-only">
                 <div class="modal-header">
                     <h4>Edit Comment</h4>
@@ -651,37 +651,37 @@ $mysqli->close();
         <!-- Bulk Actions Sidebar -->
         <div id="bulk-actions-dropdown" class="admin-only">
             <div class="bulk-sidebar-header">
-                <h4 style="margin: 0 0 10px 0; color: #333; display: flex; align-items: center; gap: 8px;">
+                <h4 class="bulk-panel-header">
                     🔧 <span>Bulk Actions</span>
                 </h4>
-                <div id="selected-count" style="font-size: 0.9em; color: #666; margin-bottom: 15px;">Click tasks to select them</div>
+                <div id="selected-count" class="bulk-selected-count">Click tasks to select them</div>
             </div>
             
             <div class="bulk-selection-controls">
-                <h6 style="margin: 0 0 8px 0; color: #555; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Selection</h6>
-                <div style="display: flex; gap: 5px; margin-bottom: 20px;">
-                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllTasks()" style="flex: 1;">Select All</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="clearTaskSelection()" style="flex: 1;">Clear</button>
+                <h6 class="bulk-section-title">Selection</h6>
+                <div class="bulk-button-row">
+                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllTasks()">Select All</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearTaskSelection()">Clear</button>
                 </div>
             </div>
             
             <div class="bulk-actions-section">
-                <h6 style="margin: 0 0 8px 0; color: #555; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Actions</h6>
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-                    <button class="btn btn-sm btn-success" onclick="bulkUpdateStatus('Done')" style="text-align: left;">✓ Mark as Done</button>
-                    <button class="btn btn-sm btn-primary" onclick="bulkUpdateStatus('In Progress')" style="text-align: left;">⏳ Mark as In Progress</button>
-                    <button class="btn btn-sm btn-warning" onclick="bulkUpdateStatus('To Do')" style="text-align: left;">📋 Mark as To Do</button>
-                    <button class="btn btn-sm btn-danger" onclick="bulkDeleteTasks()" style="text-align: left;">🗑️ Delete Selected</button>
+                <h6 class="bulk-section-title">Actions</h6>
+                <div class="bulk-actions-column">
+                    <button class="btn btn-sm btn-success bulk-action-btn" onclick="bulkUpdateStatus('Done')">✓ Mark as Done</button>
+                    <button class="btn btn-sm btn-primary bulk-action-btn" onclick="bulkUpdateStatus('In Progress')">⏳ Mark as In Progress</button>
+                    <button class="btn btn-sm btn-warning bulk-action-btn" onclick="bulkUpdateStatus('To Do')">📋 Mark as To Do</button>
+                    <button class="btn btn-sm btn-danger bulk-action-btn" onclick="bulkDeleteTasks()">🗑️ Delete Selected</button>
                 </div>
             </div>
             
-            <div class="bulk-exit-section" style="border-top: 1px solid #eee; padding-top: 15px;">
-                <button class="btn btn-sm btn-outline-dark" onclick="exitBulkMode()" style="width: 100%;">Exit Bulk Mode</button>
+            <div class="bulk-exit-section">
+                <button class="btn btn-sm btn-outline-dark bulk-exit-btn" onclick="exitBulkMode()">Exit Bulk Mode</button>
             </div>
         </div>
 
         <!-- Project Settings Modal -->
-        <div id="project-settings-modal" class="modal" style="display: none;">
+        <div id="project-settings-modal" class="modal hidden">
             <div class="modal-content admin-only">
                 <div class="modal-header">
                     <h4>⚙️ Project Settings</h4>
@@ -703,7 +703,7 @@ $mysqli->close();
                     <div class="settings-section">
                         <h5>Danger Zone</h5>
                         <button class="btn btn-danger" onclick="archiveProject()">Archive Project</button>
-                        <p class="text-muted" style="font-size: 0.9rem; margin-top: 10px;">
+                        <p class="text-muted text-small">
                             Note: Delete project functionality requires additional confirmation
                         </p>
                     </div>
@@ -732,11 +732,21 @@ $mysqli->close();
         // Make CSRF token available to JavaScript
         window.csrfToken = '<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>';
         
+        // Global variables for bulk actions functionality
+        let selectedTasks = new Set();
+        let bulkSelectionMode = false;
+        let originalTaskCardHandlers = new Map();
+        
         // Define showTaskModal function in its own script block
         function showTaskModal() {
+            // Close bulk actions panel if open
+            if (bulkSelectionMode) {
+                exitBulkMode();
+            }
+            
             const taskModal = document.getElementById('task-modal');
             if (taskModal) {
-                taskModal.style.display = 'flex';
+                taskModal.classList.remove('hidden');
                 taskModal.style.visibility = 'visible';
                 taskModal.style.opacity = '1';
                 taskModal.style.zIndex = '9999';
@@ -765,7 +775,7 @@ $mysqli->close();
         function hideTaskModal() {
             const taskModal = document.getElementById('task-modal');
             if (taskModal) {
-                taskModal.style.display = 'none';
+                taskModal.classList.add('hidden');
                 document.body.style.overflow = 'auto';
             }
         }
@@ -1207,7 +1217,7 @@ $mysqli->close();
                     return;
                 }
                 
-                emptyState.style.display = 'none';
+                emptyState.classList.add('hidden');
                 taskList.innerHTML = this.tasks.map(task => this.renderTaskCard(task)).join('');
                 
                 // Bind task-specific events
@@ -1222,7 +1232,7 @@ $mysqli->close();
                     return;
                 }
                 
-                emptyState.style.display = 'none';
+                emptyState.classList.add('hidden');
                 
                 // Group tasks by status
                 const tasksByStatus = {
@@ -1379,7 +1389,7 @@ $mysqli->close();
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 return `
                     <div class="calendar-task ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
-                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                         data-task-id="${task.task_id}" class="cursor-pointer">
                         <div class="calendar-task-title">${this.escapeHtml(task.title)}</div>
                         <div class="calendar-task-meta">
                             <span class="status-badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
@@ -1393,7 +1403,7 @@ $mysqli->close();
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 return `
                     <div class="mytask-card ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
-                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                         data-task-id="${task.task_id}" class="cursor-pointer">
                         <div class="mytask-title">${this.escapeHtml(task.title)}</div>
                         ${task.description ? `<div class="mytask-description">${this.escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
                         <div class="mytask-meta">
@@ -1408,7 +1418,7 @@ $mysqli->close();
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 return `
                     <div class="team-task ${task.status.toLowerCase().replace(' ', '-')} ${isOverdue ? 'overdue' : ''}" 
-                         data-task-id="${task.task_id}" style="cursor: pointer;">
+                         data-task-id="${task.task_id}" class="cursor-pointer">
                         <div class="team-task-header">
                             <div class="team-task-title">${this.escapeHtml(task.title)}</div>
                             <span class="status-badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
@@ -1437,7 +1447,7 @@ $mysqli->close();
                 const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'Done';
                 
                 return `
-                    <div class="task-card ${statusClass}" data-task-id="${task.task_id}" style="cursor: pointer;" data-tooltip="Click to view details and comments">
+                    <div class="task-card ${statusClass} cursor-pointer" data-task-id="${task.task_id}" data-tooltip="Click to view details and comments">
                         <div class="task-header">
                             <h4 class="task-title" data-task-id="${task.task_id}">
                                 ${this.escapeHtml(task.title)}
@@ -1664,7 +1674,7 @@ $mysqli->close();
                     this.currentTask = response.task;
                     
                     // Hide detail modal instantly
-                    document.getElementById('task-detail-modal').style.display = 'none';
+                    document.getElementById('task-detail-modal').classList.add('hidden');
                     
                     // Prepare edit modal (don't reset overflow yet)
                     document.getElementById('modal-title').textContent = 'Edit Task';
@@ -1682,8 +1692,12 @@ $mysqli->close();
                         checkbox.checked = this.currentTask.assignees.some(a => a.user_id == checkbox.value);
                     });
                     
+                    // Close bulk actions panel if open
+                    if (bulkSelectionMode) {
+                        exitBulkMode();
+                    }
                     // Show edit modal immediately (seamless transition)
-                    document.getElementById('task-modal').style.display = 'flex';
+                    document.getElementById('task-modal').classList.remove('hidden');
                     // Keep body overflow as 'hidden' for seamless transition
                     
                 } catch (error) {
@@ -1757,12 +1771,16 @@ $mysqli->close();
             }
             
             showModal() {
-                document.getElementById('task-modal').style.display = 'flex';
+                // Close bulk actions panel if open
+                if (bulkSelectionMode) {
+                    exitBulkMode();
+                }
+                document.getElementById('task-modal').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             }
             
             hideModal() {
-                document.getElementById('task-modal').style.display = 'none';
+                document.getElementById('task-modal').classList.add('hidden');
                 document.body.style.overflow = 'auto';
                 this.currentTask = null;
             }
@@ -1904,8 +1922,8 @@ $mysqli->close();
             }
             
             showEmptyState() {
-                document.getElementById('task-list').style.display = 'none';
-                document.getElementById('empty-state').style.display = 'block';
+                document.getElementById('task-list').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
             }
             
             escapeHtml(text) {
@@ -1950,7 +1968,11 @@ $mysqli->close();
                 // Show/hide appropriate view
                 Object.keys(views).forEach(key => {
                     if (views[key]) {
-                        views[key].style.display = key === view ? 'block' : 'none';
+                        if (key === view) {
+                            views[key].classList.remove('hidden');
+                        } else {
+                            views[key].classList.add('hidden');
+                        }
                     }
                 });
                 
@@ -1978,7 +2000,7 @@ $mysqli->close();
                 return `
                     <div class="kanban-task-card" draggable="true" data-task-id="${task.task_id}" data-status="${task.status}">
                         <div class="kanban-task-header">
-                            <div class="kanban-task-title" data-task-id="${task.task_id}" style="cursor: pointer;">
+                            <div class="kanban-task-title cursor-pointer" data-task-id="${task.task_id}">
                                 ${this.escapeHtml(task.title)}
                             </div>
                             ${canModifyTask ? `
@@ -2479,8 +2501,12 @@ $mysqli->close();
                     // Bind modal action buttons
                     this.bindModalActions(task);
                     
+                    // Close bulk actions panel if open
+                    if (bulkSelectionMode) {
+                        exitBulkMode();
+                    }
                     // Show modal
-                    document.getElementById('task-detail-modal').style.display = 'flex';
+                    document.getElementById('task-detail-modal').classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
                     
                 } catch (error) {
@@ -2516,7 +2542,7 @@ $mysqli->close();
                             this.showEditModalFromDetail(task.task_id);
                         });
                     } else {
-                        editBtn.style.display = 'none';
+                        editBtn.classList.add('hidden');
                     }
                 }
                 
@@ -2529,12 +2555,12 @@ $mysqli->close();
                         
                         newDeleteBtn.addEventListener('click', () => {
                             // Hide detail modal first, then delete
-                            document.getElementById('task-detail-modal').style.display = 'none';
+                            document.getElementById('task-detail-modal').classList.add('hidden');
                             document.body.style.overflow = 'auto';
                             this.deleteTask(task.task_id);
                         });
                     } else {
-                        deleteBtn.style.display = 'none';
+                        deleteBtn.classList.add('hidden');
                     }
                 }
             }
@@ -2598,11 +2624,11 @@ $mysqli->close();
                     const emptyComments = document.getElementById('empty-comments');
                     
                     if (comments.length === 0) {
-                        commentsList.style.display = 'none';
-                        emptyComments.style.display = 'block';
+                        commentsList.classList.add('hidden');
+                        emptyComments.classList.remove('hidden');
                     } else {
-                        emptyComments.style.display = 'none';
-                        commentsList.style.display = 'block';
+                        emptyComments.classList.add('hidden');
+                        commentsList.classList.remove('hidden');
                         commentsList.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
                         this.bindCommentEvents();
                         this.scrollToNewestComment();
@@ -2705,7 +2731,11 @@ $mysqli->close();
                     // Update character counter
                     this.updateCharCounter('edit-comment-content');
                     
-                    document.getElementById('edit-comment-modal').style.display = 'flex';
+                    // Close bulk actions panel if open
+                    if (bulkSelectionMode) {
+                        exitBulkMode();
+                    }
+                    document.getElementById('edit-comment-modal').classList.remove('hidden');
                     
                 } catch (error) {
                     console.error('Failed to load comment for editing:', error);
@@ -2732,8 +2762,8 @@ $mysqli->close();
                             // Check if this was the last comment
                             const remainingComments = document.querySelectorAll('.comment');
                             if (remainingComments.length === 0) {
-                                document.getElementById('comments-list').style.display = 'none';
-                                document.getElementById('empty-comments').style.display = 'block';
+                                document.getElementById('comments-list').classList.add('hidden');
+                                document.getElementById('empty-comments').classList.remove('hidden');
                             }
                         }, 300);
                     }
@@ -2892,7 +2922,7 @@ $mysqli->close();
                     // Close parent modal
                     const modal = this.closest('.modal');
                     if (modal) {
-                        modal.style.display = 'none';
+                        modal.classList.add('hidden');
                         document.body.style.overflow = 'auto';
                     }
                 }
@@ -2903,7 +2933,7 @@ $mysqli->close();
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
-                    this.style.display = 'none';
+                    this.classList.add('hidden');
                     document.body.style.overflow = 'auto';
                 }
             });
@@ -2913,7 +2943,7 @@ $mysqli->close();
         window.hideModal = function(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
-                modal.style.display = 'none';
+                modal.classList.add('hidden');
                 document.body.style.overflow = 'auto';
             }
         };
@@ -2946,15 +2976,16 @@ $mysqli->close();
             const projectSettingsBtn = document.getElementById('project-settings-btn');
             if (projectSettingsBtn) {
                 projectSettingsBtn.addEventListener('click', function() {
-                    document.getElementById('project-settings-modal').style.display = 'flex';
+                    // Close bulk actions panel if open
+                    if (bulkSelectionMode) {
+                        exitBulkMode();
+                    }
+                    document.getElementById('project-settings-modal').classList.remove('hidden');
                 });
             }
         });
 
         // Bulk Actions Functionality
-        let selectedTasks = new Set();
-        let bulkSelectionMode = false;
-        let originalTaskCardHandlers = new Map();
 
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
@@ -2963,10 +2994,8 @@ $mysqli->close();
             
             if (dropdown && dropdown.classList.contains('show')) {
                 if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                    dropdown.classList.remove('show');
-                    if (bulkSelectionMode) {
-                        exitBulkMode();
-                    }
+                    // Just close the dropdown, keep bulk mode active
+                    closeBulkActionsDropdown();
                 }
             }
         });
@@ -2976,14 +3005,23 @@ $mysqli->close();
             const isVisible = dropdown.classList.contains('show');
             
             if (isVisible) {
-                dropdown.classList.remove('show');
-                if (bulkSelectionMode) {
-                    exitBulkMode();
-                }
+                // If clicking the button again, exit bulk mode completely
+                exitBulkMode();
             } else {
+                // Show the bulk actions panel
                 enableBulkSelectionMode();
                 positionSidebarToContent();
                 dropdown.classList.add('show');
+            }
+        }
+        
+        function closeBulkActionsDropdown() {
+            const dropdown = document.getElementById('bulk-actions-dropdown');
+            if (dropdown) {
+                dropdown.classList.remove('show');
+                // Clear inline positioning styles
+                dropdown.style.left = '';
+                dropdown.style.top = '';
             }
         }
 
@@ -3044,7 +3082,7 @@ $mysqli->close();
                 
                 // Add bulk selection styles
                 newCard.classList.add('bulk-selectable');
-                newCard.style.cursor = 'pointer';
+                newCard.classList.add('cursor-pointer');
                 
                 // Add new click handler for selection - use capture to override everything
                 newCard.addEventListener('click', function(e) {
@@ -3105,6 +3143,9 @@ $mysqli->close();
             // Hide dropdown
             const dropdown = document.getElementById('bulk-actions-dropdown');
             dropdown.classList.remove('show');
+            // Clear inline positioning styles
+            dropdown.style.left = '';
+            dropdown.style.top = '';
             
             // Remove bulk selection mode from body
             document.body.classList.remove('bulk-selection-active');

@@ -121,10 +121,11 @@ $mysqli->close();
 
         <div class="section">
             <div class="flex-between mb-2">
-                <h3 style="margin: 0;">Your Projects (<?php echo count($userProjects); ?>)</h3>
+                <h3 class="margin-0">Your Projects (<?php echo count($userProjects); ?>)</h3>
                 <div>
                     <a href="create-project.php" class="btn-create member-only">+ Create New Project</a>
-                    <button class="btn-create admin-only" data-role-show="admin" style="background: #dc3545; margin-left: 10px;">🔧 Admin Tools</button>
+                    <a href="archived-projects.php" class="btn-create member-only archived-btn">📦 Archived Projects</a>
+                    <button class="btn-create admin-only admin-button" data-role-show="admin">🔧 Admin Tools</button>
                 </div>
             </div>
             
@@ -201,18 +202,18 @@ $mysqli->close();
 
         <!-- Admin-Only Section -->
         <div class="section admin-only" data-role-show="admin">
-            <h3 style="color: #dc3545;">🔧 Admin Dashboard</h3>
+            <h3 class="admin-section-header">🔧 Admin Dashboard</h3>
             <div class="admin-stats">
                 <div class="stat-card">
                     <h4>System Management</h4>
                     <p>Manage users, projects, and system settings</p>
-                    <button class="btn-create" style="background: #28a745;">User Management</button>
-                    <button class="btn-create" style="background: #17a2b8; margin-left: 10px;">System Settings</button>
+                    <button class="btn-create success-button">User Management</button>
+                    <button class="btn-create info-button">System Settings</button>
                 </div>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666;">
+        <div class="page-footer">
             <p>Simple Dashboard - Authentication Testing Complete</p>
         </div>
     </div>

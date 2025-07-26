@@ -53,7 +53,7 @@ class AutoMigration {
      */
     public static function showMigrationBanner() {
         if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-            echo '<div class="alert alert-info migration-banner" style="margin: 10px; padding: 15px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px;">';
+            echo '<div class="alert alert-info migration-banner">';
             echo '<strong>⚠️ Database Update Required:</strong> ';
             echo 'New database migrations are pending. Please run <code>php migrate.php</code> to update your database.';
             echo '</div>';

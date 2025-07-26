@@ -73,6 +73,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
                             <i class="bi bi-plus-circle"></i> New Project
                         </a>
                     </li>
+                    <li class="nav-item member-only">
+                        <a class="nav-link" href="archived-projects.php">
+                            <i class="bi bi-archive"></i> Archived Projects
+                        </a>
+                    </li>
                     <li class="nav-item admin-only" data-role-show="admin">
                         <a class="nav-link" href="#admin-panel">
                             <i class="bi bi-shield-check"></i> Admin Panel
@@ -90,13 +95,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
                             </span>
                         </a>
                         <!-- Notification Dropdown -->
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown" style="width: 350px;" id="notifList">
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-wide" aria-labelledby="notifDropdown" id="notifList">
                             <li class="dropdown-header d-flex justify-content-between align-items-center">
                                 <span>Notifications</span>
                                 <button class="btn btn-sm btn-link text-decoration-none p-0" id="markAllRead">Mark all as read</button>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            <div id="notifItems" style="max-height: 300px; overflow-y: auto;">
+                            <div id="notifItems" class="dropdown-menu-scrollable">
                                 <li class="dropdown-item-text text-muted text-center py-3">
                                     <i class="bi bi-bell-slash"></i> No notifications
                                 </li>
