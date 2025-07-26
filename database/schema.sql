@@ -135,7 +135,7 @@ BEGIN
         (OLD.status = 'Done' AND NEW.status IN ('To Do', 'In Progress'))
     ) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = CONCAT('Invalid status transition: ', OLD.status, ' → ', NEW.status);
+        SET MESSAGE_TEXT = 'Invalid status transition detected';
     END IF;
 END$$
 
@@ -158,8 +158,8 @@ BEGIN
         SELECT
             ta.user_id,
             'task_updated',
-            CONCAT('Task Updated: ', NEW.title),
-            CONCAT('The task "', NEW.title, '" is now "', NEW.status, '"'),
+            'Task Updated',
+            'Task status has been updated',
             NEW.task_id,
             NEW.project_id
         FROM task_assignments ta
