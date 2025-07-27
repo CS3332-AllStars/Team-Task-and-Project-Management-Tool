@@ -94,6 +94,12 @@ CREATE TABLE notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     type ENUM('task_assigned', 'task_updated', 'task_completed', 'comment_added', 'project_invitation', 'deadline_reminder') NOT NULL,
+    title VARCHAR(255) NOT NULL DEFAULT '',
+    message TEXT,
+    related_task_id INT NULL,
+    related_project_id INT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (related_task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
     FOREIGN KEY (related_project_id) REFERENCES projects(project_id) ON DELETE CASCADE

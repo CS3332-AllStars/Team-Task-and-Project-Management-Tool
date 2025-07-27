@@ -26,6 +26,9 @@ if (file_exists(__DIR__ . '/../src/models/Task.php')) {
 if (file_exists(__DIR__ . '/../src/models/Comment.php')) {
     require_once __DIR__ . '/../src/models/Comment.php';
 }
+if (file_exists(__DIR__ . '/../src/models/NotificationService.php')) {
+    require_once __DIR__ . '/../src/models/NotificationService.php';
+}
 
 // Load testing infrastructure
 require_once __DIR__ . '/fixtures/reset_database.php';

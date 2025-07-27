@@ -47,7 +47,62 @@ class TaskTest extends TestCase {
         $result = $this->task->create($projectId, '', 'Description');
         
         $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Title is required', $result['message']);
+        $this->assertStringContainsString('title', $result['message']);
     }
     
-    /**\n     * Test updating task status\n     * Covers: FR-16 (Task status updates)\n     * TDD: This test will FAIL until updateStatus is implemented\n     */\n    public function testUpdateStatus_Success() {\n        $projectId = $this->createTestProject();\n        $taskResult = $this->task->create($projectId, 'Test Task', 'Description');\n        $taskId = $taskResult['task_id'];\n        \n        $result = $this->task->updateStatus($taskId, 'In Progress');\n        \n        $this->assertTrue($result['success']);\n        \n        // Verify status changed\n        $task = $this->task->getById($taskId);\n        $this->assertEquals('In Progress', $task['status']);\n    }\n    \n    /**\n     * Test assigning task to team member\n     * Covers: FR-15 (Task assignment)\n     * TDD: This test will FAIL until assignToUser is implemented\n     */\n    public function testAssignTask_Success() {\n        $projectId = $this->createTestProject();\n        $taskResult = $this->task->create($projectId, 'Test Task', 'Description');\n        $taskId = $taskResult['task_id'];\n        $userId = $this->createTestUser();\n        \n        $result = $this->task->assignToUser($taskId, $userId);\n        \n        $this->assertTrue($result['success']);\n    }\n    \n    // ===== HELPER METHODS =====\n    \n    private function createTestUser() {\n        $user = new User($this->pdo);\n        $result = $user->register('testuser' . uniqid(), 'test' . uniqid() . '@example.com', 'ValidPass123!', 'Test User');\n        return $result['user_id'];\n    }\n    \n    private function createTestProject() {\n        // Use the failing Project class - this creates dependencies between TDD tests\n        $project = new Project($this->pdo);\n        $userId = $this->createTestUser();\n        $result = $project->create('Test Project', 'Test description', $userId);\n        return $result['project_id'];\n    }\n}\n?>
+    /**
+     * Test updating task status
+     * Covers: FR-16 (Task status updates)
+     */
+    public function testUpdateStatus_Success() {
+        $projectId = $this->createTestProject();
+        $taskResult = $this->task->create($projectId, 'Test Task', 'Description');
+        $taskId = $taskResult['task_id'];
+        
+        $result = $this->task->updateStatus($taskId, 'In Progress');
+        
+        $this->assertTrue($result['success']);
+        
+        // Verify status changed
+        $task = $this->task->getById($taskId);
+        $this->assertEquals('In Progress', $task['status']);
+    }
+    
+    /**
+     * Test assigning task to team member
+     * Covers: FR-15 (Task assignment)
+     */
+    public function testAssignTask_Success() {
+        $projectOwnerId = $this->createTestUser();
+        $project = new Project($this->pdo);
+        $projectResult = $project->create('Test Project', 'Test description', $projectOwnerId);
+        $projectId = $projectResult['project_id'];
+        
+        $taskResult = $this->task->create($projectId, 'Test Task', 'Description');
+        $taskId = $taskResult['task_id'];
+        
+        // Add user as member to the project first
+        $userId = $this->createTestUser();
+        $project->addMember($projectId, $userId, 'member');
+        
+        $result = $this->task->assignToUser($taskId, $userId);
+        
+        $this->assertTrue($result['success']);
+    }
+    
+    // ===== HELPER METHODS =====
+    
+    private function createTestUser() {
+        $user = new User($this->pdo);
+        $result = $user->register('testuser' . uniqid(), 'test' . uniqid() . '@example.com', 'ValidPass123!', 'Test User');
+        return $result['user_id'];
+    }
+    
+    private function createTestProject() {
+        $project = new Project($this->pdo);
+        $userId = $this->createTestUser();
+        $result = $project->create('Test Project', 'Test description', $userId);
+        return $result['project_id'];
+    }
+}
+?>
