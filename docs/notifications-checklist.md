@@ -157,8 +157,38 @@ This checklist validates the notification system functionality across the applic
 - [ ] CS3-15 features verified
 - [ ] Team sign-off obtained
 
+### Mobile Testing
+- [ ] Push Notifications
+  - [ ] Appear on mobile devices
+  - [ ] Deep link to correct task/project
+  - [ ] Respect system notification settings
+  - [ ] Badge appears on app icon
+
+### Accessibility Tests
+- [ ] Screen reader compatibility
+  - [ ] Notifications announced properly
+  - [ ] Proper ARIA labels present
+- [ ] Keyboard navigation
+  - [ ] Can access notification center with keyboard
+  - [ ] Can mark as read using keyboard
+- [ ] Color contrast meets WCAG standards
+
+### Rate Limiting
+- [ ] Notification throttling works
+  - [ ] Max 10 notifications per minute per user
+  - [ ] Grouped notifications for multiple actions
+  - [ ] Priority notifications bypass limits
+
+### Test Data Cleanup
+- [ ] Clear test notifications after testing
+```sql
+-- Cleanup test notifications
+DELETE FROM notifications 
+WHERE created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
+AND (user_id IN (5,6,7) OR type LIKE 'test_%');
 ## References
 - Notification Types: `task_assigned`, `comment_added`, `task_updated`, `project_invitation`, `deadline_reminder`, `task_completed`
+
 - Related Files: 
   - `database/schema.sql` (notifications table)
   - `database/sample_data.sql` (test notifications)
