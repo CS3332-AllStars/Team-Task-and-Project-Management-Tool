@@ -16,9 +16,30 @@ This checklist validates the notification system functionality across the applic
        Check notification database record matches User A's ID. 
        Use test accounts: james_ward/password123 and summer_hill/password123)
   - [ ] Title shows "New Task Assignment"
+        (Test notification title formatting:
+        Exact text matches "New Task Assignment"
+        Proper capitalization on all words
+        No extra whitespace or special characters
+        Consistent across all browsers
+       Database verification:
+       ```sql
+       SELECT notification_title FROM notifications 
+       WHERE type = 'task_assigned' 
+       AND notification_id = [ID];
+       ```
+       UI verification:
+        Title appears bold in notification center
+        Truncates properly if too long
+        Maintains formatting in mobile view)
   - [ ] Message includes task name
   - [ ] Links to correct task
   - [ ] Timestamp accurate
+        (Test by creating notifications and verifying:
+       Shows in user's timezone (check system vs displayed time)
+       Creation time matches database timestamp within 1 second
+       Format matches "X minutes/hours ago" for recent, "MMM DD" for older
+        Hover shows full datetime tooltip
+       Use test query: SELECT created_at, NOW() FROM notifications WHERE notification_id = [ID])   
 
 ### Comment Notifications
 - [ ] New comment triggers notification for task participants
