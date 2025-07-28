@@ -755,7 +755,7 @@ class RoleManager {
             permissions: this.permissions
         };
         
-        console.log('Debug Info:', debugInfo);
+        // Debug info available in development
         alert('Debug info logged to console');
     }
     
@@ -778,7 +778,7 @@ class RoleManager {
             feature.classList.add('admin-enabled');
         });
         
-        console.log('Admin controls shown');
+        // Admin controls activated
     }
     
     /**
@@ -798,7 +798,7 @@ class RoleManager {
             feature.classList.remove('admin-enabled');
         });
         
-        console.log('Admin controls hidden');
+        // Admin controls deactivated
     }
     
     /**
@@ -811,7 +811,7 @@ class RoleManager {
             element.classList.add('hidden');
         });
         
-        console.log('Member-only elements hidden');
+        // Member elements restricted
     }
     
     /**
@@ -824,7 +824,7 @@ class RoleManager {
             element.classList.remove('hidden');
         });
         
-        console.log('Member-only elements shown');
+        // Member elements enabled
     }
     
     /**

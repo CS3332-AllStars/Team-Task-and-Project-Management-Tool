@@ -1,6 +1,6 @@
 <?php
 // CS3332 AllStars Team Task & Project Management System
-// Simple Dashboard for Authentication Testing
+// Team Task & Project Management Dashboard
 
 require_once 'includes/session-check.php';
 
@@ -96,7 +96,7 @@ $mysqli->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="user-id" content="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
     <meta name="user-role" content="<?php echo htmlspecialchars($_SESSION['role'] ?? 'user'); ?>">
-    <title>Simple Dashboard - TTPM</title>
+    <title>Dashboard - TTPM</title>
     <link rel="stylesheet" href="assets/css/project.css">
     <link rel="stylesheet" href="assets/css/components.css">
 </head>
@@ -106,17 +106,17 @@ $mysqli->close();
             <?php AutoMigration::showMigrationBanner(); ?>
         <?php endif; ?>
         
-        <div class="header center">
+        <div style="text-align: right; margin-bottom: 10px;">
             <a href="logout.php" class="logout-link">Logout</a>
-            <h1>Simple Dashboard</h1>
-            <p>Authentication Test Interface</p>
+        </div>
+        <div class="header center">
+            <h1>Dashboard</h1>
+            <p>Team Task & Project Management</p>
         </div>
 
-        <div class="auth-info">
-            <h3>Authentication Status: ✅ SUCCESS</h3>
-            <p><strong>Welcome:</strong> <?php echo htmlspecialchars($_SESSION['username'] ?? 'Unknown'); ?></p>
-            <p><strong>User ID:</strong> <?php echo htmlspecialchars($_SESSION['user_id'] ?? 'Not set'); ?></p>
-            <p><strong>Session Started:</strong> <?php echo date('Y-m-d H:i:s'); ?></p>
+        <div class="welcome-section">
+            <h3>Welcome, <?php echo htmlspecialchars($_SESSION['name'] ?? $_SESSION['username'] ?? 'User'); ?>!</h3>
+            <p>Manage your projects and tasks efficiently with our collaborative platform.</p>
         </div>
 
         <div class="section">
@@ -214,7 +214,7 @@ $mysqli->close();
         </div>
 
         <div class="page-footer">
-            <p>Simple Dashboard - Authentication Testing Complete</p>
+            <p>CS3332 AllStars - Team Task & Project Management System</p>
         </div>
     </div>
     

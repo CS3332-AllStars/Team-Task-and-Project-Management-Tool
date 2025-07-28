@@ -203,7 +203,7 @@ $mysqli->close();
 </head>
 <body>
     <div class="container">
-        <!-- Navigation Bar for Role-Based UI Testing -->
+        <!-- Navigation Bar for Role-Based UI -->
         <nav class="navbar">
             <div class="navbar-nav">
                 <a href="dashboard.php" class="back-link">← Back to Dashboard</a>
@@ -371,7 +371,7 @@ $mysqli->close();
                         data-tooltip="Create a new task for this project">
                     + Create Task
                 </button>
-                <!-- Admin-only controls for testing -->
+                <!-- Admin-only controls -->
                 <div class="position-relative inline-block">
                     <button id="bulk-actions-btn" class="btn btn-warning admin-only" data-role-show="admin" data-tooltip="Admin-only bulk operations">
                         🔧 Bulk Actions
